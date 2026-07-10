@@ -1,0 +1,51 @@
+{
+  "name": "prefkeeper",
+  "version": "0.1.0",
+  "description": "A drop-in accessibility preference engine — users set color, text, and motion preferences once on their device; any site using PrefKeeper reads and applies them automatically.",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "browser": "./dist/index.global.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup src/index.js --format esm,cjs,iife --global-name PrefKeeper --dts --clean",
+    "dev": "tsup src/index.js --format esm,cjs,iife --global-name PrefKeeper --watch",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "keywords": [
+    "accessibility",
+    "a11y",
+    "theme",
+    "preferences",
+    "wcag"
+  ],
+  "license": "MIT",
+  "devDependencies": {
+    "tsup": "^8.5.1",
+    "vitest": "^2.1.9"
+  },
+  "directories": {
+    "doc": "docs",
+    "example": "examples",
+    "test": "test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tbatchelder/prefkeeper.git"
+  },
+  "author": "",
+  "bugs": {
+    "url": "https://github.com/tbatchelder/prefkeeper/issues"
+  },
+  "homepage": "https://github.com/tbatchelder/prefkeeper#readme"
+}

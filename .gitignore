@@ -27,5 +27,4 @@ npm-debug.log*
 *.log
 
 # Package manager lockfile churn (pick ONE — see note below)
-# package-lock.json
-
+package.json
