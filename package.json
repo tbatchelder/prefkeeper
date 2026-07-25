@@ -20,7 +20,10 @@
     "build": "tsup src/index.js --format esm,cjs,iife --global-name PrefKeeper --dts --clean",
     "dev": "tsup src/index.js --format esm,cjs,iife --global-name PrefKeeper --watch",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   },
   "keywords": [
     "accessibility",
@@ -31,6 +34,8 @@
   ],
   "license": "MIT",
   "devDependencies": {
+    "@vitest/coverage-v8": "^2.1.9",
+    "prettier": "^3.3.3",
     "tsup": "^8.5.1",
     "vitest": "^2.1.9"
   },

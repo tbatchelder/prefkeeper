@@ -26,4 +26,7 @@ Thumbs.db
 npm-debug.log*
 *.log
 
-# Package manager lockfile churn (pick ONE — see note below)
+# Package manager lockfile churn — only ignore the ones you AREN'T using.
+# If you use npm (package-lock.json), leave these commented out.
+# yarn.lock
+# pnpm-lock.yaml
