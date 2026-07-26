@@ -1,1 +1,41 @@
 <!-- examples/vanilla/index.html -->
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>PrefKeeper — vanilla example</title>
+    <link rel="stylesheet" href="../../src/ui/panel.css" />
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 2rem;
+      }
+      #pk-mount {
+        max-width: 900px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Example host site</h1>
+    <p>
+      This stands in for a real developer's page. Open the console for errors.
+    </p>
+    <button id="open-btn" type="button">Open PrefKeeper</button>
+
+    <div id="pk-mount"></div>
+
+    <script type="module">
+      import { initPrefKeeper } from "../../src/ui/panel.js";
+
+      document
+        .getElementById("open-btn")
+        .addEventListener("click", async () => {
+          document.getElementById("pk-mount").innerHTML = "";
+          await initPrefKeeper({
+            mountTo: document.getElementById("pk-mount"),
+          });
+        });
+    </script>
+  </body>
+</html>

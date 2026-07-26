@@ -1,3 +1,615 @@
 /* src/ui/panel.cas */
 
 /* panel's own styling — namespaced so it doesn't leak */
+
+/*
+ * All selectors are namespaced under .pk-* to avoid colliding with a
+ * host page's existing classes (see docs/decisions — this is the same
+ * collision-avoidance reasoning behind the --pk-* CSS variable prefix).
+ *
+ * IMPORTANT: the preview elements in each tab (.pk-preview, .pk-focus-demo,
+ * .pk-motion-demo) style themselves via var(--pk-*) tokens, exactly like a
+ * real developer's site would — NOT via inline styles set directly by
+ * panel.js. This is deliberate: it means engine.js's applyColors/applyText/
+ * applyMotion/applyFocus functions work identically whether their target
+ * is one of these preview elements or the real document.documentElement.
+ * There is no separate "preview styling" code path — the preview IS proof
+ * the token system works.
+ */
+
+.pk-app {
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 3px solid #000;
+  height: 90vh;
+  display: flex;
+  flex-direction: column;
+  font-family: "Atkinson Hyperlegible", Arial, sans-serif;
+  position: relative;
+}
+
+/* TABS */
+
+.pk-tabs {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #d8d8d8;
+  border-bottom: 1px solid #b9b9b9;
+  padding-right: 0.75rem;
+}
+
+.pk-tab-group {
+  display: flex;
+  overflow-x: auto;
+}
+
+.pk-tab {
+  border: none;
+  background: #cfcfcf;
+  padding: 1rem 1.5rem;
+  cursor: pointer;
+  white-space: nowrap;
+  font-family: inherit;
+}
+
+.pk-tab.pk-active {
+  background: white;
+  border-bottom: 3px solid #555;
+  font-weight: bold;
+}
+
+.pk-icon-group {
+  display: flex;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.pk-icon-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  border: 1px solid #bbb;
+  background: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pk-icon-btn:hover {
+  background: #f0f0f0;
+}
+
+.pk-icon-btn svg {
+  width: 20px;
+  height: 20px;
+  color: #555;
+}
+
+.pk-icon-btn:hover svg {
+  color: #222;
+}
+
+/* HAMBURGER MENU */
+
+.pk-hamburger-menu {
+  position: absolute;
+  top: 56px;
+  right: 12px;
+  background: white;
+  border: 1px solid #bbb;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  min-width: 240px;
+  overflow: hidden;
+}
+
+.pk-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  border: none;
+  background: white;
+  padding: 0.75rem 1rem;
+  text-align: left;
+  cursor: pointer;
+  font-size: 0.95rem;
+  font-family: inherit;
+}
+
+.pk-menu-item:hover {
+  background: #f0f0f0;
+}
+
+.pk-menu-item svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+.pk-menu-divider {
+  height: 1px;
+  background: #ddd;
+  margin: 0.25rem 0;
+}
+
+.pk-menu-item-danger {
+  font-weight: bold;
+  border-top: 2px solid #999;
+}
+
+/* SETTINGS PANEL */
+
+.pk-settings-panel {
+  position: absolute;
+  top: 56px;
+  right: 12px;
+  background: white;
+  border: 1px solid #bbb;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 20;
+  padding: 1rem;
+  min-width: 280px;
+}
+
+.pk-settings-panel h3 {
+  margin-top: 0;
+}
+
+.pk-settings-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.95rem;
+  margin-bottom: 1rem;
+}
+
+/* PRESETS */
+
+.pk-preset-selects {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+.pk-preset-selects select {
+  flex: 1;
+  min-width: 160px;
+  min-height: 44px;
+  padding: 0.5rem;
+  font-size: 0.95rem;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  background: white;
+  font-family: inherit;
+}
+
+/* STATUS */
+
+.pk-preview-mode {
+  min-width: 180px;
+}
+
+.pk-preview-mode p {
+  margin: 0.25rem 0 0;
+  font-size: 0.9rem;
+  color: #555;
+}
+
+.pk-editing select,
+.pk-controls select {
+  width: 100%;
+  min-height: 44px;
+  padding: 0.5rem;
+  font-size: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  font-family: inherit;
+}
+
+.pk-adjusting {
+  font-weight: bold;
+}
+
+/* MAIN */
+
+.pk-content {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
+
+.pk-preview-panel {
+  flex: 1;
+  padding: 1rem;
+  overflow: auto;
+}
+
+/* PREVIEW — reads --pk-* tokens, same as a real host page would */
+
+.pk-preview {
+  background: var(--pk-background, #ffffff);
+  color: var(--pk-text, #222222);
+  border: 1px solid #ddd;
+  border-radius: 12px;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  font-size: var(--pk-font-size, 100%);
+  line-height: var(--pk-line-height, 1.5);
+  letter-spacing: var(--pk-letter-spacing, 0px);
+  word-spacing: var(--pk-word-spacing, 0px);
+  font-family: var(--pk-font-family, Arial, sans-serif);
+}
+
+.pk-preview h2,
+.pk-preview p {
+  margin: 0;
+}
+
+.pk-preview-link {
+  color: var(--pk-link, #1a75e0);
+}
+
+.pk-preview button {
+  width: 100%;
+}
+
+.pk-primary-btn {
+  background: var(--pk-primary, #1a75e0);
+  color: var(--pk-on-primary, #ffffff);
+  border: none;
+  border-radius: 8px;
+  padding: 0.75rem;
+  transition:
+    transform calc(var(--pk-reduce-motion, 1) * 0.3s) ease,
+    background calc(var(--pk-reduce-motion, 1) * 0.3s) ease;
+  font-family: inherit;
+}
+
+.pk-primary-btn:hover {
+  transform: scale(1.05);
+}
+
+.pk-secondary-btn {
+  background: #ddd;
+  color: #222;
+  border: none;
+  border-radius: 8px;
+  padding: 0.75rem;
+  font-family: inherit;
+}
+
+.pk-preview input {
+  padding: 0.75rem;
+  border-radius: 8px;
+  border: 1px solid #bbb;
+  font-family: inherit;
+}
+
+.pk-success {
+  background: #dff2df;
+  padding: 0.75rem;
+  border-radius: 8px;
+}
+
+.pk-warning {
+  background: #ffeaa6;
+  padding: 0.75rem;
+  border-radius: 8px;
+}
+
+/* Focus preview — only visible on genuine :focus, per the earlier decision */
+.pk-focus-demo {
+  outline-color: var(--pk-focus-outline-color, hsl(200, 100%, 50%));
+  outline-width: var(--pk-focus-outline-width, 3px);
+  outline-style: solid;
+  outline-offset: 2px;
+}
+
+.pk-focus-demo:not(:focus) {
+  outline-style: none;
+}
+
+/* CONTROLS */
+
+.pk-controls {
+  width: 300px;
+  min-width: 300px;
+  background: #f7f7f7;
+  border-left: 1px solid #ddd;
+  display: flex;
+  flex-direction: column;
+  padding: 1rem;
+}
+
+.pk-control-status {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.pk-sliders {
+  display: flex;
+  justify-content: space-evenly;
+  align-items: flex-start;
+  flex: 1;
+}
+
+.pk-slider-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.pk-slider-icon {
+  font-size: 1.5rem;
+}
+
+input[type="range"].pk-vertical-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  writing-mode: vertical-lr;
+  direction: rtl;
+  width: 10px;
+  height: 45vh;
+  max-height: 320px;
+  min-height: 140px;
+  background: transparent;
+}
+
+input[type="range"].pk-vertical-slider::-webkit-slider-runnable-track {
+  width: 10px;
+  height: 100%;
+  border-radius: 6px;
+  background: var(--track-bg, #ccc);
+}
+
+input[type="range"].pk-vertical-slider::-moz-range-track {
+  width: 10px;
+  height: 100%;
+  border-radius: 6px;
+  background: var(--track-bg, #ccc);
+}
+
+input[type="range"].pk-vertical-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--thumb-color, #666);
+  border: 2px solid #000;
+  cursor: pointer;
+  margin-left: -6px;
+}
+
+input[type="range"].pk-vertical-slider::-moz-range-thumb {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--thumb-color, #666);
+  border: 2px solid #000;
+  cursor: pointer;
+}
+
+.pk-color-track {
+  --track-bg: linear-gradient(
+    to top,
+    red,
+    orange,
+    yellow,
+    green,
+    cyan,
+    blue,
+    violet
+  );
+}
+
+/* CALCULATIONS */
+
+.pk-calculations {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #ddd;
+  text-align: center;
+}
+
+.pk-contrast-badge {
+  display: inline-block;
+  font-size: 0.85rem;
+  font-weight: bold;
+  padding: 0.4rem 0.75rem;
+  border-radius: 8px;
+}
+
+.pk-contrast-badge.pk-excellent {
+  background: #dff2df;
+}
+
+.pk-contrast-badge.pk-acceptable {
+  background: #fff3cd;
+}
+
+.pk-contrast-badge.pk-difficult {
+  background: #f8d7da;
+}
+
+/* TEXT TAB */
+
+.pk-text-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.pk-text-slider-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.pk-text-slider-row label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.9rem;
+}
+
+.pk-text-slider-row label span {
+  font-weight: bold;
+  color: #333;
+}
+
+.pk-font-choice {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.pk-font-choice-label {
+  font-size: 0.9rem;
+  font-weight: bold;
+  margin: 0;
+}
+
+.pk-font-options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.pk-font-option {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  padding: 0.6rem 0.75rem;
+  cursor: pointer;
+}
+
+.pk-font-option:has(input:checked) {
+  border-color: #333;
+  background: #f5f5f5;
+}
+
+.pk-font-sample {
+  font-size: 0.95rem;
+}
+
+/* MOTION TAB */
+
+.pk-motion-toggle {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  font-size: 1rem;
+}
+
+.pk-motion-hint {
+  font-size: 0.85rem;
+  color: #555;
+  margin: 0;
+}
+
+/* FOCUS TAB */
+
+.pk-focus-width {
+  margin-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+/* FOOTER */
+
+.pk-app-footer {
+  display: flex;
+  justify-content: space-between;
+  background: #eeeeee;
+  border-top: 1px solid #ccc;
+}
+
+.pk-footer-left {
+  display: flex;
+}
+
+.pk-footer-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border: none;
+  border-right: 4px solid #444;
+  background: #666;
+  color: white;
+  padding: 1rem;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.pk-footer-btn svg {
+  width: 18px;
+  height: 18px;
+}
+
+.pk-footer-left .pk-footer-btn:last-child {
+  border-right: none;
+}
+
+.pk-footer-btn:hover {
+  background: #555;
+}
+
+.pk-view-toggle {
+  background: #888;
+  border-right: none;
+}
+
+.pk-view-toggle:hover {
+  background: #777;
+}
+
+/* Ensure the hidden attribute always wins regardless of display rules elsewhere */
+.pk-app [hidden] {
+  display: none !important;
+}
+
+/* MOBILE */
+
+@media (max-width: 768px) {
+  .pk-controls {
+    width: 42%;
+    min-width: 150px;
+  }
+
+  .pk-vertical-slider {
+    height: 35vh;
+  }
+
+  .pk-tab {
+    padding: 0.75rem;
+    font-size: 0.85rem;
+  }
+
+  .pk-icon-btn {
+    width: 30px;
+    height: 30px;
+  }
+}
+
+@media (max-width: 480px) {
+  .pk-controls {
+    width: 45%;
+    min-width: 140px;
+  }
+}
