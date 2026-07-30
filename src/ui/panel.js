@@ -47,6 +47,7 @@ import {
 } from "../core/engine.js";
 import { rateTokenContrast } from "../core/contrast.js";
 import * as storage from "../storage/index.js";
+import { injectFontFaces } from "./fonts.js";
 
 // ---- Presets, keyed by the same token names as tokens.js (not the old
 // UI label strings) so they can be handed straight to applyColors(). ----
@@ -130,11 +131,13 @@ function el(html) {
 
 function buildTemplate() {
   return `
-    <div class="pk-app">
-      <header class="pk-tabs">
-        <div class="pk-tab-group">
-          <button class="pk-tab pk-active" data-panel="colors" type="button">Colors</button>
-          <button class="pk-tab" data-panel="text" type="button">Text</button>
+    <div class="pk-overlay">
+      <div class="pk-backdrop"></div>
+      <div class="pk-app">
+        <header class="pk-tabs">
+          <div class="pk-tab-group">
+            <button class="pk-tab pk-active" data-panel="colors" type="button">Colors</button>
+            <button class="pk-tab" data-panel="text" type="button">Text</button>
           <button class="pk-tab" data-panel="motion" type="button">Motion</button>
           <button class="pk-tab" data-panel="focus" type="button">Focus</button>
         </div>
@@ -278,7 +281,7 @@ function buildTemplate() {
                 </label>
                 <label class="pk-font-option">
                   <input type="radio" name="pk-font-choice" value="atkinson">
-                  <span class="pk-font-sample" style="font-family: 'Atkinson Hyperlegible', sans-serif;">Atkinson Hyperlegible &mdash; The quick brown fox jumps.</span>
+                  <span class="pk-font-sample" style="font-family: 'Atkinson Hyperlegible Next', sans-serif;">Atkinson Hyperlegible Next &mdash; The quick brown fox jumps.</span>
                 </label>
               </div>
             </div>
@@ -352,7 +355,8 @@ function buildTemplate() {
           </button>
         </div>
         <button class="pk-footer-btn pk-view-toggle" type="button">View Site Default</button>
-      </footer>
+        </footer>
+      </div>
     </div>
   `;
 }
@@ -360,13 +364,21 @@ function buildTemplate() {
 /**
  * Mounts the PrefKeeper panel into the page and wires it up.
  * @param {Object} [options]
- * @param {Element} [options.mountTo=document.body] - where to insert the panel
  * @returns {Promise<{ container: Element, close: Function }>}
  */
 export async function initPrefKeeper(options = {}) {
-  const mountTo = options.mountTo || document.body;
+  injectFontFaces();
+
+  // Always appended directly to document.body, regardless of any
+  // mountTo the caller passes — position:fixed only reliably covers
+  // the whole viewport if nothing between it and the page root has
+  // its own transform/filter/perspective (which creates a new
+  // containing block for fixed-position elements). Nesting inside an
+  // arbitrary host-page container risks silently breaking that. This
+  // is the same reason serious modal/overlay libraries always attach
+  // to body rather than wherever they were triggered from.
   const container = el(buildTemplate());
-  mountTo.appendChild(container);
+  document.body.appendChild(container);
 
   // ---- Working state (Track 1) ----
   // Starts from whatever's already saved, NOT hardcoded defaults, so
@@ -780,7 +792,7 @@ export async function initPrefKeeper(options = {}) {
   });
 
   // ---- Close (the ONLY place Track 2 -- the real host page -- gets touched) ----
-  closeBtn.addEventListener("click", async () => {
+  async function handleClose() {
     if (dirtyCategories.size > 0) {
       const confirmed = confirm(
         'You have unsaved changes.\n\nClick OK for "Save and Close," or Cancel to keep editing.',
@@ -792,7 +804,14 @@ export async function initPrefKeeper(options = {}) {
     const saved = await storage.get();
     applyState(saved, document.documentElement);
     container.style.display = "none";
-  });
+  }
+
+  closeBtn.addEventListener("click", handleClose);
+
+  // NOTE: deliberately NOT wiring a backdrop click to close the panel.
+  // The X button (with its unsaved-changes check) is the only way to
+  // dismiss -- an accidental click just outside the panel while
+  // mid-edit shouldn't be able to silently discard someone's changes.
 
   // ---- Initial paint ----
   renderColors();

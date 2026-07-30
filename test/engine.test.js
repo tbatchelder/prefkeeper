@@ -1,5 +1,3 @@
-// test/engine.test.js
-
 import { describe, it, expect, beforeEach } from "vitest";
 import {
   applyColors,
@@ -69,7 +67,7 @@ describe("applyText", () => {
     const target = createFakeTarget();
     target.style.setProperty(
       "--pk-font-family",
-      "'Atkinson Hyperlegible', sans-serif",
+      "'Atkinson Hyperlegible Next', sans-serif",
     );
     applyText(
       {
@@ -84,7 +82,7 @@ describe("applyText", () => {
     expect(target.props["--pk-font-family"]).toBeUndefined();
   });
 
-  it('sets the Atkinson Hyperlegible stack when fontFamily is "atkinson"', () => {
+  it('sets the Atkinson Hyperlegible Next stack when fontFamily is "atkinson"', () => {
     const target = createFakeTarget();
     applyText(
       {
@@ -96,7 +94,9 @@ describe("applyText", () => {
       },
       target,
     );
-    expect(target.props["--pk-font-family"]).toContain("Atkinson Hyperlegible");
+    expect(target.props["--pk-font-family"]).toContain(
+      "Atkinson Hyperlegible Next",
+    );
   });
 });
 

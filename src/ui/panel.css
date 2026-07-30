@@ -3,6 +3,8 @@
 /* panel's own styling — namespaced so it doesn't leak */
 
 /*
+ * panel.css
+ *
  * All selectors are namespaced under .pk-* to avoid colliding with a
  * host page's existing classes (see docs/decisions — this is the same
  * collision-avoidance reasoning behind the --pk-* CSS variable prefix).
@@ -17,16 +19,39 @@
  * the token system works.
  */
 
+.pk-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 999999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.pk-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+}
+
 .pk-app {
+  position: relative;
   background: white;
   border-radius: 12px;
   overflow: hidden;
   border: 3px solid #000;
+  /* Width stays capped/consistent across tabs. Height reverted to
+     90vh (was briefly capped to 600px, which is what triggered the
+     flexbox min-height overflow bug fixed below -- the sliders now
+     grow/shrink correctly regardless of the overall app height, so
+     90vh no longer causes the same clipping issue it would have
+     before that fix). */
+  width: min(920px, calc(100vw - 2rem));
   height: 90vh;
   display: flex;
   flex-direction: column;
-  font-family: "Atkinson Hyperlegible", Arial, sans-serif;
-  position: relative;
+  font-family: "Atkinson Hyperlegible Next", Arial, sans-serif;
 }
 
 /* TABS */
@@ -38,6 +63,7 @@
   background: #d8d8d8;
   border-bottom: 1px solid #b9b9b9;
   padding-right: 0.75rem;
+  font-size: larger;
 }
 
 .pk-tab-group {
@@ -48,10 +74,11 @@
 .pk-tab {
   border: none;
   background: #cfcfcf;
-  padding: 1rem 1.5rem;
+  padding: 0.75rem 1.5rem;
   cursor: pointer;
   white-space: nowrap;
   font-family: inherit;
+  font-size: large;
 }
 
 .pk-tab.pk-active {
@@ -140,7 +167,7 @@
 
 .pk-menu-item-danger {
   font-weight: bold;
-  border-top: 2px solid #999;
+  color: #a33333;
 }
 
 /* SETTINGS PANEL */
@@ -224,17 +251,24 @@
   flex: 1;
   display: flex;
   overflow: hidden;
+  min-height: 0;
 }
 
 .pk-preview-panel {
   flex: 1;
   padding: 1rem;
   overflow: auto;
+  /* The .pk-preview card below is stretched to fill this panel's
+     full height via flex, instead of sitting at its own natural
+     content height and leaving empty space beneath it. */
+  display: flex;
+  flex-direction: column;
 }
 
 /* PREVIEW — reads --pk-* tokens, same as a real host page would */
 
 .pk-preview {
+  flex: 1;
   background: var(--pk-background, #ffffff);
   color: var(--pk-text, #222222);
   border: 1px solid #ddd;
@@ -329,6 +363,7 @@
   display: flex;
   flex-direction: column;
   padding: 1rem;
+  min-height: 0;
 }
 
 .pk-control-status {
@@ -341,8 +376,13 @@
 .pk-sliders {
   display: flex;
   justify-content: space-evenly;
-  align-items: flex-start;
+  /* was align-items: flex-start -- that's what stopped slider-groups
+     from stretching to fill this row's available height, leaving
+     dead space below them even though .pk-sliders itself (flex: 1)
+     was correctly growing to fill the Controls column. */
+  align-items: stretch;
   flex: 1;
+  min-height: 0;
 }
 
 .pk-slider-group {
@@ -350,6 +390,8 @@
   flex-direction: column;
   align-items: center;
   gap: 0.5rem;
+  flex: 1;
+  min-height: 0;
 }
 
 .pk-slider-icon {
@@ -362,9 +404,15 @@ input[type="range"].pk-vertical-slider {
   writing-mode: vertical-lr;
   direction: rtl;
   width: 10px;
-  height: 45vh;
-  max-height: 320px;
+  /* Grows/shrinks to fill whatever height is actually available in
+     its slider-group, instead of guessing a fixed vh/px size. This
+     is also what makes the sliders self-adjust if v2 adds more
+     content to the Preview card later -- less available height
+     just means a shorter (but never unusably tiny, floor below)
+     slider, automatically, with no CSS changes needed then. */
+  flex: 1;
   min-height: 140px;
+  max-height: 500px;
   background: transparent;
 }
 
@@ -590,10 +638,6 @@ input[type="range"].pk-vertical-slider::-moz-range-thumb {
   .pk-controls {
     width: 42%;
     min-width: 150px;
-  }
-
-  .pk-vertical-slider {
-    height: 35vh;
   }
 
   .pk-tab {

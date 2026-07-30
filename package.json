@@ -14,11 +14,13 @@
     }
   },
   "files": [
-    "dist"
+    "dist",
+    "assets"
   ],
   "scripts": {
-    "build": "tsup src/index.js --format esm,cjs,iife --global-name PrefKeeper --dts --clean",
-    "dev": "tsup src/index.js --format esm,cjs,iife --global-name PrefKeeper --watch",
+    "build": "tsup",
+    "postbuild": "node scripts/copy-assets.mjs",
+    "dev": "tsup --watch",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
