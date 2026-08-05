@@ -3,8 +3,6 @@
 // applies variables to :root, reads/writes the token map
 
 /**
- * engine.js
- *
  * Converts the state shapes defined in tokens.js into real CSS custom
  * properties on a target element — by default document.documentElement,
  * i.e. the host page's :root, which is what makes a developer's own

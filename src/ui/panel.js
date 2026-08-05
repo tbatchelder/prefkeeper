@@ -48,65 +48,16 @@ import {
 import { rateTokenContrast } from "../core/contrast.js";
 import * as storage from "../storage/index.js";
 import { injectFontFaces } from "./fonts.js";
+import { CONTRAST_PRESETS as DEFAULT_CONTRAST_PRESETS } from "../presets/contrast.js";
+import { COLOR_VISION_PRESETS as DEFAULT_COLOR_VISION_PRESETS } from "../presets/colorblind.js";
 
-// ---- Presets, keyed by the same token names as tokens.js (not the old
-// UI label strings) so they can be handed straight to applyColors(). ----
-
-const CONTRAST_PRESETS = {
-  high: {
-    background: { hue: 0, sat: 0, light: 100 },
-    text: { hue: 0, sat: 0, light: 0 },
-    primary: { hue: 0, sat: 0, light: 0 },
-    onPrimary: { hue: 0, sat: 0, light: 100 },
-    link: { hue: 240, sat: 100, light: 45 },
-  },
-  low: {
-    background: { hue: 0, sat: 0, light: 92 },
-    text: { hue: 0, sat: 0, light: 42 },
-    primary: { hue: 0, sat: 0, light: 62 },
-    onPrimary: { hue: 0, sat: 0, light: 100 },
-    link: { hue: 0, sat: 0, light: 48 },
-  },
-  dark: {
-    background: { hue: 0, sat: 0, light: 12 },
-    text: { hue: 0, sat: 0, light: 94 },
-    primary: { hue: 210, sat: 75, light: 55 },
-    onPrimary: { hue: 210, sat: 80, light: 10 },
-    link: { hue: 45, sat: 90, light: 65 },
-  },
-  light: {
-    background: { hue: 0, sat: 0, light: 100 },
-    text: { hue: 0, sat: 0, light: 13 },
-    primary: { hue: 210, sat: 80, light: 50 },
-    onPrimary: { hue: 0, sat: 0, light: 100 },
-    link: { hue: 210, sat: 80, light: 40 },
-  },
-};
-
-const COLOR_VISION_PRESETS = {
-  deut: {
-    primary: { hue: 210, sat: 85, light: 45 },
-    onPrimary: { hue: 0, sat: 0, light: 100 },
-    link: { hue: 35, sat: 90, light: 45 },
-  },
-  prot: {
-    primary: { hue: 205, sat: 85, light: 40 },
-    onPrimary: { hue: 0, sat: 0, light: 100 },
-    link: { hue: 40, sat: 95, light: 45 },
-  },
-  trit: {
-    primary: { hue: 340, sat: 70, light: 45 },
-    onPrimary: { hue: 0, sat: 0, light: 100 },
-    link: { hue: 175, sat: 60, light: 35 },
-  },
-  achroma: {
-    background: { hue: 0, sat: 0, light: 100 },
-    text: { hue: 0, sat: 0, light: 0 },
-    primary: { hue: 0, sat: 0, light: 25 },
-    onPrimary: { hue: 0, sat: 0, light: 100 },
-    link: { hue: 0, sat: 0, light: 15 },
-  },
-};
+// NOTE: the actual preset DATA (High Contrast, Dark Mode, Deuteranopia,
+// etc.) now lives in src/presets/ -- not here. This file only imports
+// it and merges it with any customPresets an initPrefKeeper() caller
+// supplies (see initPrefKeeper below). This is what lets a company
+// (or any developer) layer in their own preset -- possibly private,
+// never published in this open-source package -- without forking or
+// touching panel.js at all.
 
 const TARGET_LABELS = {
   background: "Background",
@@ -127,6 +78,22 @@ function el(html) {
   const template = document.createElement("template");
   template.innerHTML = html.trim();
   return template.content.firstElementChild;
+}
+
+/**
+ * Appends one <option> per preset key to a <select>, using each
+ * preset's own `label`. This is what makes custom presets show up as
+ * real, selectable dropdown entries -- the select's placeholder
+ * option (value="") is left untouched; everything else is generated
+ * from whichever preset set is actually active for this instance.
+ */
+function populateSelect(selectEl, presets) {
+  Object.entries(presets).forEach(([key, preset]) => {
+    const option = document.createElement("option");
+    option.value = key;
+    option.textContent = preset.label;
+    selectEl.appendChild(option);
+  });
 }
 
 function buildTemplate() {
@@ -178,17 +145,9 @@ function buildTemplate() {
           <div class="pk-preset-selects">
             <select class="pk-contrast-select">
               <option value="">Display mode: default</option>
-              <option value="high">High contrast</option>
-              <option value="low">Low contrast</option>
-              <option value="dark">Dark mode</option>
-              <option value="light">Light mode</option>
             </select>
             <select class="pk-colorvision-select">
               <option value="">Color vision: none selected</option>
-              <option value="deut">Red-green, most common (Deuteranopia)</option>
-              <option value="prot">Red-green, less common (Protanopia)</option>
-              <option value="trit">Blue-yellow (Tritanopia)</option>
-              <option value="achroma">No color / grayscale (Achromatopsia)</option>
             </select>
           </div>
           <div class="pk-preview">
@@ -380,6 +339,22 @@ export async function initPrefKeeper(options = {}) {
   const container = el(buildTemplate());
   document.body.appendChild(container);
 
+  // Merge any caller-supplied custom presets with the built-in
+  // defaults. A custom key with the same name as a built-in one
+  // (e.g. redefining 'dark') overrides it; any other key is added
+  // alongside. This is the actual extension point that lets a
+  // company's own private preset (never published in this
+  // open-source package) get used without forking panel.js --
+  // initPrefKeeper({ customPresets: { contrast: {...}, colorVision: {...} } }).
+  const contrastPresets = {
+    ...DEFAULT_CONTRAST_PRESETS,
+    ...(options.customPresets?.contrast || {}),
+  };
+  const colorVisionPresets = {
+    ...DEFAULT_COLOR_VISION_PRESETS,
+    ...(options.customPresets?.colorVision || {}),
+  };
+
   // ---- Working state (Track 1) ----
   // Starts from whatever's already saved, NOT hardcoded defaults, so
   // reopening the panel reflects prior choices instead of resetting
@@ -399,6 +374,8 @@ export async function initPrefKeeper(options = {}) {
   const colorPreview = q('main[data-panel="colors"] .pk-preview');
   const contrastSelect = q(".pk-contrast-select");
   const colorVisionSelect = q(".pk-colorvision-select");
+  populateSelect(contrastSelect, contrastPresets);
+  populateSelect(colorVisionSelect, colorVisionPresets);
   const targetSelect = q(".pk-target-select");
   const adjustingText = q(".pk-adjusting-text");
   const colorSlider = q(".pk-color-slider");
@@ -558,10 +535,10 @@ export async function initPrefKeeper(options = {}) {
 
   function applyColorPreset(preset) {
     state.colors = JSON.parse(JSON.stringify(colorDefaults));
-    Object.entries(preset).forEach(([target, value]) => {
+    Object.entries(preset.values).forEach(([target, value]) => {
       state.colors[target] = value;
     });
-    const changedTarget = Object.keys(preset)[0];
+    const changedTarget = Object.keys(preset.values)[0];
     targetSelect.value = changedTarget;
     adjustingText.textContent = TARGET_LABELS[changedTarget];
     renderColors();
@@ -571,13 +548,13 @@ export async function initPrefKeeper(options = {}) {
   contrastSelect.addEventListener("change", (e) => {
     if (!e.target.value) return;
     colorVisionSelect.value = "";
-    applyColorPreset(CONTRAST_PRESETS[e.target.value]);
+    applyColorPreset(contrastPresets[e.target.value]);
   });
 
   colorVisionSelect.addEventListener("change", (e) => {
     if (!e.target.value) return;
     contrastSelect.value = "";
-    applyColorPreset(COLOR_VISION_PRESETS[e.target.value]);
+    applyColorPreset(colorVisionPresets[e.target.value]);
   });
 
   // ---- TEXT TAB ----
@@ -819,6 +796,10 @@ export async function initPrefKeeper(options = {}) {
   renderMotion();
   renderFocus();
   resetLabel.textContent = RESET_LABELS.colors;
+  // Nothing has been edited yet -- sync the status text to reflect
+  // that, rather than leaving the template's hardcoded placeholder
+  // ("Preview Mode / Changes are not saved") displayed by default.
+  markAllSaved();
 
   // The real host page reflects whatever was already saved, immediately
   // on load -- independent of whether the panel is even opened this visit.

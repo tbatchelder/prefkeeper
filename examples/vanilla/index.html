@@ -1,5 +1,3 @@
-<!-- examples/vanilla/index.html -->
-
 <!doctype html>
 <html lang="en">
   <head>
@@ -7,10 +5,80 @@
     <title>PrefKeeper — vanilla example</title>
     <link rel="stylesheet" href="../../src/ui/panel.css" />
     <style>
+      /*
+       * This is the part that was missing before: an example "developer's
+       * site" that actually REFERENCES the --pk-* tokens PrefKeeper sets
+       * on document.documentElement at Close. Setting a CSS custom
+       * property that nothing reads is a correct no-op, not a bug --
+       * this file's job is to be the thing that reads them, the same way
+       * a real adopting site's own CSS would.
+       *
+       * Fallback values (the second argument to each var()) match
+       * tokens.js's own defaults, so the page still looks reasonable
+       * before PrefKeeper has ever been opened/closed at all.
+       */
       body {
-        font-family: Arial, sans-serif;
+        background: var(--pk-background, #ffffff);
+        color: var(--pk-text, #222222);
+        font-family: var(--pk-font-family, Arial, sans-serif);
+        font-size: var(--pk-font-size, 100%);
+        line-height: var(--pk-line-height, 1.5);
+        letter-spacing: var(--pk-letter-spacing, 0px);
+        word-spacing: var(--pk-word-spacing, 0px);
         margin: 2rem;
+        max-width: 700px;
+        transition:
+          background calc(var(--pk-reduce-motion, 1) * 0.3s) ease,
+          color calc(var(--pk-reduce-motion, 1) * 0.3s) ease;
       }
+
+      a {
+        color: var(--pk-link, #0645ad);
+      }
+
+      .demo-btn {
+        background: var(--pk-primary, #0066cc);
+        color: var(--pk-on-primary, #ffffff);
+        border: none;
+        padding: 0.75rem 1.25rem;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: inherit;
+        font-family: inherit;
+        transition: transform calc(var(--pk-reduce-motion, 1) * 0.3s) ease;
+      }
+
+      .demo-btn:hover {
+        transform: scale(1.05);
+      }
+
+      /* Reads the SEPARATE Focus tab tokens -- not the same tokens as
+         the button's own background/text color above. */
+      .demo-btn:focus,
+      .demo-input:focus {
+        outline-color: var(--pk-focus-outline-color, hsl(200, 100%, 50%));
+        outline-width: var(--pk-focus-outline-width, 3px);
+        outline-style: solid;
+        outline-offset: 2px;
+      }
+
+      .demo-input {
+        font-size: inherit;
+        font-family: inherit;
+        padding: 0.5rem;
+      }
+
+      /* The harness controls below (not "site content") stay visually
+         neutral on purpose, so it's clear they're not part of what
+         PrefKeeper is restyling. */
+      .harness {
+        margin-top: 2rem;
+        padding-top: 1rem;
+        border-top: 1px solid #ccc;
+        font-family: Arial, sans-serif;
+        font-size: 1rem;
+      }
+
       #pk-mount {
         max-width: 900px;
       }
@@ -19,9 +87,20 @@
   <body>
     <h1>Example host site</h1>
     <p>
-      This stands in for a real developer's page. Open the console for errors.
+      This paragraph, the link below, and the button are real "site content" --
+      styled entirely with
+      <code>var(--pk-*)</code>, the same way a real developer's page would be.
+      Open PrefKeeper, change something, then Close it to see this content
+      actually update.
     </p>
-    <button id="open-btn" type="button">Open PrefKeeper</button>
+    <p><a href="#" onclick="return false;">A sample link</a></p>
+    <p><button class="demo-btn" type="button">Primary Action</button></p>
+    <p><input class="demo-input" type="text" placeholder="Sample input" /></p>
+
+    <div class="harness">
+      <p>Harness controls (not styled by PrefKeeper's tokens):</p>
+      <button id="open-btn" type="button">Open PrefKeeper</button>
+    </div>
 
     <div id="pk-mount"></div>
 

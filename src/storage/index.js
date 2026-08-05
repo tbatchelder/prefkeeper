@@ -1,8 +1,6 @@
-// src/storage/index.js
-
-// storage interface: get(), set(), export(), import())
-
 /**
+ * storage/index.js
+ *
  * The single public storage API the rest of PrefKeeper talks to.
  * Nothing outside src/storage/ should import an adapter directly —
  * everything goes through get()/set()/clear()/exportState()/importState()
@@ -53,16 +51,7 @@ export function isValidState(state) {
   const { colors, text, motion, focus } = state;
 
   if (!colors || typeof colors !== "object") return false;
-
-  const colorTargets = [
-    "background",
-    "text",
-    "primary",
-    "onPrimary",
-    "link",
-    "focus",
-  ];
-
+  const colorTargets = ["background", "text", "primary", "onPrimary", "link"];
   if (!colorTargets.every((target) => isColorToken(colors[target])))
     return false;
 

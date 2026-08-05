@@ -1,8 +1,8 @@
-// src/core/tokens.js
-
-// the canonical --pk-* variable list + defaults
-
 /**
+ * tokens.js
+ *
+ * The canonical --pk-* CSS custom property schema.
+ *
  * IMPORTANT: this file defines the FIXED SET of variable names PrefKeeper
  * ever writes to. It is never duplicated per theme/preset. Light mode, dark
  * mode, high contrast, each color-vision preset, and every manual slider
@@ -26,7 +26,6 @@ export const COLOR_TOKENS = {
   primary: "--pk-primary", // button background
   onPrimary: "--pk-on-primary", // button text — independent contrast pair from body text
   link: "--pk-link",
-  focus: "--pk-focus",
 };
 
 export const colorDefaults = {
@@ -35,7 +34,6 @@ export const colorDefaults = {
   primary: { hue: 210, sat: 80, light: 50 },
   onPrimary: { hue: 0, sat: 0, light: 100 },
   link: { hue: 210, sat: 80, light: 40 },
-  focus: { hue: 200, sat: 100, light: 50 },
 };
 
 // ---- Text tokens ----

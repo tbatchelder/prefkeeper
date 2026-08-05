@@ -1,5 +1,3 @@
-// test/tokens.test.js
-
 import { describe, it, expect } from "vitest";
 import {
   colorDefaults,
@@ -12,7 +10,7 @@ import {
 describe("tokens", () => {
   it("colorDefaults has all five expected targets", () => {
     expect(Object.keys(colorDefaults).sort()).toEqual(
-      ["background", "text", "primary", "onPrimary", "link", "focus"].sort(),
+      ["background", "text", "primary", "onPrimary", "link"].sort(),
     );
   });
 
