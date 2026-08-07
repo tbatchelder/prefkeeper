@@ -50,6 +50,7 @@ import * as storage from "../storage/index.js";
 import { injectFontFaces } from "./fonts.js";
 import { CONTRAST_PRESETS as DEFAULT_CONTRAST_PRESETS } from "../presets/contrast.js";
 import { COLOR_VISION_PRESETS as DEFAULT_COLOR_VISION_PRESETS } from "../presets/colorblind.js";
+import { el } from "../utils/dom.js";
 
 // NOTE: the actual preset DATA (High Contrast, Dark Mode, Deuteranopia,
 // etc.) now lives in src/presets/ -- not here. This file only imports
@@ -73,12 +74,6 @@ const CATEGORY_LABELS = {
   motion: "Motion",
   focus: "Focus",
 };
-
-function el(html) {
-  const template = document.createElement("template");
-  template.innerHTML = html.trim();
-  return template.content.firstElementChild;
-}
 
 /**
  * Appends one <option> per preset key to a <select>, using each

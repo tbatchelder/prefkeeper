@@ -1,4 +1,4 @@
-import { defineConfig } from "vitest/config";
+import { defineConfig, coverageConfigDefaults } from "vitest/config";
 
 export default defineConfig({
   test: {
@@ -15,6 +15,16 @@ export default defineConfig({
     environmentMatchGlobs: [
       ["test/fonts.test.js", "jsdom"],
       ["test/panel.test.js", "jsdom"],
+      ["test/dom.test.js", "jsdom"],
     ],
+    coverage: {
+      // scripts/copy-assets.mjs deliberately excluded: it's Node-only
+      // build tooling (never shipped to consumers), and it runs its
+      // real file-copy logic on import rather than exporting a
+      // testable function -- meaningful testing would need a refactor
+      // disproportionate to a 20-line script already verified
+      // manually across many real `npm run build` runs.
+      exclude: [...coverageConfigDefaults.exclude, "scripts/**"],
+    },
   },
 });
