@@ -87,11 +87,9 @@
   <body>
     <h1>Example host site</h1>
     <p>
-      This paragraph, the link below, and the button are real "site content" --
-      styled entirely with
-      <code>var(--pk-*)</code>, the same way a real developer's page would be.
-      Open PrefKeeper, change something, then Close it to see this content
-      actually update.
+      This paragraph, the link below, and the button are real "site content" -- styled entirely with
+      <code>var(--pk-*)</code>, the same way a real developer's page would be. Open PrefKeeper,
+      change something, then Close it to see this content actually update.
     </p>
     <p><a href="#" onclick="return false;">A sample link</a></p>
     <p><button class="demo-btn" type="button">Primary Action</button></p>
@@ -105,16 +103,14 @@
     <div id="pk-mount"></div>
 
     <script type="module">
-      import { initPrefKeeper } from "../../src/ui/panel.js";
+      import { initPrefKeeper } from '../../src/ui/panel.js';
 
-      document
-        .getElementById("open-btn")
-        .addEventListener("click", async () => {
-          document.getElementById("pk-mount").innerHTML = "";
-          await initPrefKeeper({
-            mountTo: document.getElementById("pk-mount"),
-          });
+      document.getElementById('open-btn').addEventListener('click', async () => {
+        document.getElementById('pk-mount').innerHTML = '';
+        await initPrefKeeper({
+          mountTo: document.getElementById('pk-mount')
         });
+      });
     </script>
   </body>
 </html>

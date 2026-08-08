@@ -17,7 +17,7 @@
  * adapter is active.
  */
 
-const STORAGE_KEY = "prefkeeper-preferences";
+const STORAGE_KEY = 'prefkeeper-preferences';
 
 export async function get() {
   try {

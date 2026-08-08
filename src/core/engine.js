@@ -18,17 +18,12 @@
  *      needing a real browser/DOM.
  */
 
-import {
-  COLOR_TOKENS,
-  TEXT_TOKENS,
-  MOTION_TOKENS,
-  FOCUS_TOKENS,
-} from "./tokens.js";
+import { COLOR_TOKENS, TEXT_TOKENS, MOTION_TOKENS, FOCUS_TOKENS } from './tokens.js';
 
 // The one real font PrefKeeper ships and can offer as an alternative.
 // 'site' is intentionally NOT a font stack — see applyText() below.
 const FONT_STACKS = {
-  atkinson: "'Atkinson Hyperlegible Next', sans-serif",
+  atkinson: "'Atkinson Hyperlegible Next', sans-serif"
 };
 
 function hslString({ hue, sat, light }) {
@@ -56,16 +51,10 @@ export function applyColors(colorState, target = document.documentElement) {
 export function applyText(textState, target = document.documentElement) {
   target.style.setProperty(TEXT_TOKENS.fontSize, `${textState.fontSize}%`);
   target.style.setProperty(TEXT_TOKENS.lineHeight, `${textState.lineHeight}`);
-  target.style.setProperty(
-    TEXT_TOKENS.letterSpacing,
-    `${textState.letterSpacing}px`,
-  );
-  target.style.setProperty(
-    TEXT_TOKENS.wordSpacing,
-    `${textState.wordSpacing}px`,
-  );
+  target.style.setProperty(TEXT_TOKENS.letterSpacing, `${textState.letterSpacing}px`);
+  target.style.setProperty(TEXT_TOKENS.wordSpacing, `${textState.wordSpacing}px`);
 
-  if (textState.fontFamily === "atkinson") {
+  if (textState.fontFamily === 'atkinson') {
     target.style.setProperty(TEXT_TOKENS.fontFamily, FONT_STACKS.atkinson);
   } else {
     target.style.removeProperty(TEXT_TOKENS.fontFamily);
@@ -88,24 +77,15 @@ export function applyText(textState, target = document.documentElement) {
  * duration value — it only ever supplies the multiplier.
  */
 export function applyMotion(motionState, target = document.documentElement) {
-  target.style.setProperty(
-    MOTION_TOKENS.reduceMotion,
-    motionState.reduceMotion ? "0" : "1",
-  );
+  target.style.setProperty(MOTION_TOKENS.reduceMotion, motionState.reduceMotion ? '0' : '1');
 }
 
 /**
  * Writes the focus outline color/width tokens.
  */
 export function applyFocus(focusState, target = document.documentElement) {
-  target.style.setProperty(
-    FOCUS_TOKENS.outlineColor,
-    hslString(focusState.outlineColor),
-  );
-  target.style.setProperty(
-    FOCUS_TOKENS.outlineWidth,
-    `${focusState.outlineWidth}px`,
-  );
+  target.style.setProperty(FOCUS_TOKENS.outlineColor, hslString(focusState.outlineColor));
+  target.style.setProperty(FOCUS_TOKENS.outlineWidth, `${focusState.outlineWidth}px`);
 }
 
 /**
@@ -136,6 +116,6 @@ export function clearState(target = document.documentElement) {
     ...Object.values(COLOR_TOKENS),
     ...Object.values(TEXT_TOKENS),
     ...Object.values(MOTION_TOKENS),
-    ...Object.values(FOCUS_TOKENS),
-  ].forEach((cssVar) => target.style.removeProperty(cssVar));
+    ...Object.values(FOCUS_TOKENS)
+  ].forEach(cssVar => target.style.removeProperty(cssVar));
 }

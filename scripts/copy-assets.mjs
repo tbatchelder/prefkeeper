@@ -13,18 +13,16 @@
  * Runs automatically after `npm run build` via npm's postbuild
  * lifecycle hook (no separate script needs to call this directly).
  */
-import { cpSync, existsSync, rmSync } from "node:fs";
-import { fileURLToPath } from "node:url";
-import { dirname, join } from "node:path";
+import { cpSync, existsSync, rmSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { dirname, join } from 'node:path';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const srcDir = join(__dirname, "..", "src", "assets");
-const destDir = join(__dirname, "..", "assets");
+const srcDir = join(__dirname, '..', 'src', 'assets');
+const destDir = join(__dirname, '..', 'assets');
 
 if (!existsSync(srcDir)) {
-  console.warn(
-    `copy-assets: no src/assets directory found at ${srcDir}, skipping.`,
-  );
+  console.warn(`copy-assets: no src/assets directory found at ${srcDir}, skipping.`);
   process.exit(0);
 }
 

@@ -19,7 +19,7 @@
  * insert the result into whatever host page calls initPrefKeeper().
  */
 export function el(html) {
-  const template = document.createElement("template");
+  const template = document.createElement('template');
   template.innerHTML = html.trim();
   return template.content.firstElementChild;
 }

@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 
 /**
  * jsdom gives us a real DOM to check structure against (a real
@@ -18,68 +18,62 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 
 async function freshFontsModule() {
   vi.resetModules();
-  return import("../src/ui/fonts.js");
+  return import('../src/ui/fonts.js');
 }
 
 beforeEach(() => {
-  document.head
-    .querySelectorAll("[data-prefkeeper-fonts]")
-    .forEach((el) => el.remove());
+  document.head.querySelectorAll('[data-prefkeeper-fonts]').forEach(el => el.remove());
 });
 
-describe("FONT_FAMILY", () => {
-  it("matches the actual bundled font (Atkinson Hyperlegible Next, not the older Atkinson Hyperlegible)", async () => {
+describe('FONT_FAMILY', () => {
+  it('matches the actual bundled font (Atkinson Hyperlegible Next, not the older Atkinson Hyperlegible)', async () => {
     const { FONT_FAMILY } = await freshFontsModule();
-    expect(FONT_FAMILY).toBe("Atkinson Hyperlegible Next");
+    expect(FONT_FAMILY).toBe('Atkinson Hyperlegible Next');
   });
 });
 
-describe("injectFontFaces", () => {
-  it("appends a style tag with the expected marker attribute", async () => {
+describe('injectFontFaces', () => {
+  it('appends a style tag with the expected marker attribute', async () => {
     const { injectFontFaces } = await freshFontsModule();
     injectFontFaces();
-    const tag = document.head.querySelector("[data-prefkeeper-fonts]");
+    const tag = document.head.querySelector('[data-prefkeeper-fonts]');
     expect(tag).not.toBeNull();
-    expect(tag.tagName).toBe("STYLE");
+    expect(tag.tagName).toBe('STYLE');
   });
 
-  it("injects all 14 weight/style combinations", async () => {
+  it('injects all 14 weight/style combinations', async () => {
     const { injectFontFaces } = await freshFontsModule();
     injectFontFaces();
-    const tag = document.head.querySelector("[data-prefkeeper-fonts]");
+    const tag = document.head.querySelector('[data-prefkeeper-fonts]');
     const count = (tag.textContent.match(/@font-face/g) || []).length;
     expect(count).toBe(14);
   });
 
-  it("includes the full weight range, both normal and italic", async () => {
+  it('includes the full weight range, both normal and italic', async () => {
     const { injectFontFaces } = await freshFontsModule();
     injectFontFaces();
-    const css = document.head.querySelector(
-      "[data-prefkeeper-fonts]",
-    ).textContent;
-    [200, 300, 400, 500, 600, 700, 800].forEach((weight) => {
+    const css = document.head.querySelector('[data-prefkeeper-fonts]').textContent;
+    [200, 300, 400, 500, 600, 700, 800].forEach(weight => {
       expect(css).toContain(`font-weight: ${weight};`);
     });
-    expect(css).toContain("font-style: normal;");
-    expect(css).toContain("font-style: italic;");
+    expect(css).toContain('font-style: normal;');
+    expect(css).toContain('font-style: italic;');
   });
 
-  it("references the correct family name in every rule", async () => {
+  it('references the correct family name in every rule', async () => {
     const { injectFontFaces } = await freshFontsModule();
     injectFontFaces();
-    const css = document.head.querySelector(
-      "[data-prefkeeper-fonts]",
-    ).textContent;
+    const css = document.head.querySelector('[data-prefkeeper-fonts]').textContent;
     const occurrences = (css.match(/Atkinson Hyperlegible Next/g) || []).length;
     // 14 rules, each naming the family once
     expect(occurrences).toBe(14);
   });
 
-  it("is idempotent -- calling it twice in the same module instance does not inject a second style tag", async () => {
+  it('is idempotent -- calling it twice in the same module instance does not inject a second style tag', async () => {
     const { injectFontFaces } = await freshFontsModule();
     injectFontFaces();
     injectFontFaces();
-    const tags = document.head.querySelectorAll("[data-prefkeeper-fonts]");
+    const tags = document.head.querySelectorAll('[data-prefkeeper-fonts]');
     expect(tags.length).toBe(1);
   });
 });

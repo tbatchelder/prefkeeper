@@ -21,11 +21,11 @@
 // so sliders can read/write them directly. engine.js converts these to
 // hsl(...) strings when writing the actual CSS custom property.
 export const COLOR_TOKENS = {
-  background: "--pk-background",
-  text: "--pk-text",
-  primary: "--pk-primary", // button background
-  onPrimary: "--pk-on-primary", // button text — independent contrast pair from body text
-  link: "--pk-link",
+  background: '--pk-background',
+  text: '--pk-text',
+  primary: '--pk-primary', // button background
+  onPrimary: '--pk-on-primary', // button text — independent contrast pair from body text
+  link: '--pk-link'
 };
 
 export const colorDefaults = {
@@ -33,16 +33,16 @@ export const colorDefaults = {
   text: { hue: 0, sat: 0, light: 13 },
   primary: { hue: 210, sat: 80, light: 50 },
   onPrimary: { hue: 0, sat: 0, light: 100 },
-  link: { hue: 210, sat: 80, light: 40 },
+  link: { hue: 210, sat: 80, light: 40 }
 };
 
 // ---- Text tokens ----
 export const TEXT_TOKENS = {
-  fontSize: "--pk-font-size", // percentage, e.g. "100%"
-  lineHeight: "--pk-line-height", // unitless ratio, e.g. "1.5"
-  letterSpacing: "--pk-letter-spacing", // px
-  wordSpacing: "--pk-word-spacing", // px
-  fontFamily: "--pk-font-family", // 'site' | 'atkinson'
+  fontSize: '--pk-font-size', // percentage, e.g. "100%"
+  lineHeight: '--pk-line-height', // unitless ratio, e.g. "1.5"
+  letterSpacing: '--pk-letter-spacing', // px
+  wordSpacing: '--pk-word-spacing', // px
+  fontFamily: '--pk-font-family' // 'site' | 'atkinson'
 };
 
 export const textDefaults = {
@@ -50,27 +50,27 @@ export const textDefaults = {
   lineHeight: 1.5,
   letterSpacing: 0,
   wordSpacing: 0,
-  fontFamily: "site",
+  fontFamily: 'site'
 };
 
 // ---- Motion tokens ----
 export const MOTION_TOKENS = {
-  reduceMotion: "--pk-reduce-motion", // '0' | '1' — CSS reads this to gate transitions/animations
+  reduceMotion: '--pk-reduce-motion' // '0' | '1' — CSS reads this to gate transitions/animations
 };
 
 export const motionDefaults = {
-  reduceMotion: false,
+  reduceMotion: false
 };
 
 // ---- Focus tokens ----
 export const FOCUS_TOKENS = {
-  outlineColor: "--pk-focus-outline-color", // reuses the same {hue,sat,light} shape as color tokens
-  outlineWidth: "--pk-focus-outline-width", // px
+  outlineColor: '--pk-focus-outline-color', // reuses the same {hue,sat,light} shape as color tokens
+  outlineWidth: '--pk-focus-outline-width' // px
 };
 
 export const focusDefaults = {
   outlineColor: { hue: 200, sat: 100, light: 50 },
-  outlineWidth: 3,
+  outlineWidth: 3
 };
 
 // ---- Convenience: full default state, matching the shape engine.js expects ----
@@ -79,6 +79,6 @@ export function getDefaultState() {
     colors: JSON.parse(JSON.stringify(colorDefaults)),
     text: JSON.parse(JSON.stringify(textDefaults)),
     motion: JSON.parse(JSON.stringify(motionDefaults)),
-    focus: JSON.parse(JSON.stringify(focusDefaults)),
+    focus: JSON.parse(JSON.stringify(focusDefaults))
   };
 }

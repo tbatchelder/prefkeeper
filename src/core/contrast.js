@@ -18,15 +18,14 @@
 export function hslToHex({ hue, sat, light }) {
   const s = sat / 100;
   const l = light / 100;
-  const k = (n) => (n + hue / 30) % 12;
+  const k = n => (n + hue / 30) % 12;
   const a = s * Math.min(l, 1 - l);
-  const f = (n) =>
-    l - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1)));
-  const toHex = (x) =>
+  const f = n => l - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1)));
+  const toHex = x =>
     Math.round(255 * x)
       .toString(16)
-      .padStart(2, "0");
-  return "#" + toHex(f(0)) + toHex(f(8)) + toHex(f(4));
+      .padStart(2, '0');
+  return '#' + toHex(f(0)) + toHex(f(8)) + toHex(f(4));
 }
 
 /**
@@ -34,12 +33,11 @@ export function hslToHex({ hue, sat, light }) {
  * https://www.w3.org/TR/WCAG21/#dfn-relative-luminance
  */
 export function luminance(hex) {
-  const c = hex.replace("#", "");
+  const c = hex.replace('#', '');
   const r = parseInt(c.substr(0, 2), 16) / 255;
   const g = parseInt(c.substr(2, 2), 16) / 255;
   const b = parseInt(c.substr(4, 2), 16) / 255;
-  const lin = (v) =>
-    v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+  const lin = v => (v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4));
   return 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b);
 }
 
@@ -66,9 +64,9 @@ export function contrastRatio(hexA, hexB) {
 export function rateContrast(hexA, hexB) {
   const ratio = contrastRatio(hexA, hexB);
   let level;
-  if (ratio >= 4.5) level = "excellent";
-  else if (ratio >= 3) level = "acceptable";
-  else level = "difficult";
+  if (ratio >= 4.5) level = 'excellent';
+  else if (ratio >= 3) level = 'acceptable';
+  else level = 'difficult';
   return { level, ratio };
 }
 

@@ -1,11 +1,11 @@
-import { defineConfig } from "tsup";
+import { defineConfig } from 'tsup';
 
 export default defineConfig({
-  entry: ["src/index.js"],
-  format: ["esm", "cjs", "iife"],
-  globalName: "PrefKeeper",
+  entry: ['src/index.js'],
+  format: ['esm', 'cjs', 'iife'],
+  globalName: 'PrefKeeper',
   dts: true,
-  clean: true,
+  clean: true
   // NOTE: previously had a `.woff2: 'file'` loader entry here, based on
   // an incorrect assumption that esbuild auto-detects and copies
   // `new URL(path, import.meta.url)` asset references. It doesn't —

@@ -32,25 +32,14 @@
  *   document.documentElement directly.
  */
 
-import {
-  colorDefaults,
-  textDefaults,
-  motionDefaults,
-  focusDefaults,
-} from "../core/tokens.js";
-import {
-  applyColors,
-  applyText,
-  applyMotion,
-  applyFocus,
-  applyState,
-} from "../core/engine.js";
-import { rateTokenContrast } from "../core/contrast.js";
-import * as storage from "../storage/index.js";
-import { injectFontFaces } from "./fonts.js";
-import { CONTRAST_PRESETS as DEFAULT_CONTRAST_PRESETS } from "../presets/contrast.js";
-import { COLOR_VISION_PRESETS as DEFAULT_COLOR_VISION_PRESETS } from "../presets/colorblind.js";
-import { el } from "../utils/dom.js";
+import { colorDefaults, textDefaults, motionDefaults, focusDefaults } from '../core/tokens.js';
+import { applyColors, applyText, applyMotion, applyFocus, applyState } from '../core/engine.js';
+import { rateTokenContrast } from '../core/contrast.js';
+import * as storage from '../storage/index.js';
+import { injectFontFaces } from './fonts.js';
+import { CONTRAST_PRESETS as DEFAULT_CONTRAST_PRESETS } from '../presets/contrast.js';
+import { COLOR_VISION_PRESETS as DEFAULT_COLOR_VISION_PRESETS } from '../presets/colorblind.js';
+import { el } from '../utils/dom.js';
 
 // NOTE: the actual preset DATA (High Contrast, Dark Mode, Deuteranopia,
 // etc.) now lives in src/presets/ -- not here. This file only imports
@@ -61,18 +50,18 @@ import { el } from "../utils/dom.js";
 // touching panel.js at all.
 
 const TARGET_LABELS = {
-  background: "Background",
-  text: "Text",
-  primary: "Buttons",
-  onPrimary: "Button Text",
-  link: "Links",
+  background: 'Background',
+  text: 'Text',
+  primary: 'Buttons',
+  onPrimary: 'Button Text',
+  link: 'Links'
 };
 
 const CATEGORY_LABELS = {
-  colors: "Color",
-  text: "Text",
-  motion: "Motion",
-  focus: "Focus",
+  colors: 'Color',
+  text: 'Text',
+  motion: 'Motion',
+  focus: 'Focus'
 };
 
 /**
@@ -84,7 +73,7 @@ const CATEGORY_LABELS = {
  */
 function populateSelect(selectEl, presets) {
   Object.entries(presets).forEach(([key, preset]) => {
-    const option = document.createElement("option");
+    const option = document.createElement('option');
     option.value = key;
     option.textContent = preset.label;
     selectEl.appendChild(option);
@@ -343,11 +332,11 @@ export async function initPrefKeeper(options = {}) {
   // initPrefKeeper({ customPresets: { contrast: {...}, colorVision: {...} } }).
   const contrastPresets = {
     ...DEFAULT_CONTRAST_PRESETS,
-    ...(options.customPresets?.contrast || {}),
+    ...(options.customPresets?.contrast || {})
   };
   const colorVisionPresets = {
     ...DEFAULT_COLOR_VISION_PRESETS,
-    ...(options.customPresets?.colorVision || {}),
+    ...(options.customPresets?.colorVision || {})
   };
 
   // ---- Working state (Track 1) ----
@@ -358,39 +347,39 @@ export async function initPrefKeeper(options = {}) {
   const dirtyCategories = new Set();
 
   // ---- Scoped element refs (container-scoped, never document.*) ----
-  const q = (selector) => container.querySelector(selector);
-  const qa = (selector) => Array.from(container.querySelectorAll(selector));
+  const q = selector => container.querySelector(selector);
+  const qa = selector => Array.from(container.querySelectorAll(selector));
 
-  const tabs = qa(".pk-tab");
-  const panels = qa(".pk-content");
-  const resetBtn = q(".pk-reset-btn");
-  const resetLabel = q(".pk-reset-label");
+  const tabs = qa('.pk-tab');
+  const panels = qa('.pk-content');
+  const resetBtn = q('.pk-reset-btn');
+  const resetLabel = q('.pk-reset-label');
 
   const colorPreview = q('main[data-panel="colors"] .pk-preview');
-  const contrastSelect = q(".pk-contrast-select");
-  const colorVisionSelect = q(".pk-colorvision-select");
+  const contrastSelect = q('.pk-contrast-select');
+  const colorVisionSelect = q('.pk-colorvision-select');
   populateSelect(contrastSelect, contrastPresets);
   populateSelect(colorVisionSelect, colorVisionPresets);
-  const targetSelect = q(".pk-target-select");
-  const adjustingText = q(".pk-adjusting-text");
-  const colorSlider = q(".pk-color-slider");
-  const intensitySlider = q(".pk-intensity-slider");
-  const brightnessSlider = q(".pk-brightness-slider");
-  const contrastBadge = q(".pk-contrast-badge");
+  const targetSelect = q('.pk-target-select');
+  const adjustingText = q('.pk-adjusting-text');
+  const colorSlider = q('.pk-color-slider');
+  const intensitySlider = q('.pk-intensity-slider');
+  const brightnessSlider = q('.pk-brightness-slider');
+  const contrastBadge = q('.pk-contrast-badge');
 
   const textPreview = q('main[data-panel="text"] .pk-preview');
-  const fontSizeSlider = q(".pk-font-size-slider");
-  const lineHeightSlider = q(".pk-line-height-slider");
-  const letterSpacingSlider = q(".pk-letter-spacing-slider");
-  const wordSpacingSlider = q(".pk-word-spacing-slider");
+  const fontSizeSlider = q('.pk-font-size-slider');
+  const lineHeightSlider = q('.pk-line-height-slider');
+  const letterSpacingSlider = q('.pk-letter-spacing-slider');
+  const wordSpacingSlider = q('.pk-word-spacing-slider');
   const fontChoiceInputs = qa('input[name="pk-font-choice"]');
 
   const motionPreview = q('main[data-panel="motion"] .pk-preview');
-  const reduceMotionToggle = q(".pk-reduce-motion-toggle");
+  const reduceMotionToggle = q('.pk-reduce-motion-toggle');
 
   const focusPreview = q('main[data-panel="focus"] .pk-preview');
-  const focusColorSlider = q(".pk-focus-color-slider");
-  const focusWidthSlider = q(".pk-focus-width-slider");
+  const focusColorSlider = q('.pk-focus-color-slider');
+  const focusWidthSlider = q('.pk-focus-width-slider');
 
   // ---- Combined preview rendering ----
   // Every tab's preview reflects the FULL current working state (all
@@ -402,15 +391,10 @@ export async function initPrefKeeper(options = {}) {
   // was working as narrowly designed. This matches what the real host
   // page already does (applyState() always applies everything together)
   // — this just makes the internal previews consistent with that.
-  const previewElements = [
-    colorPreview,
-    textPreview,
-    motionPreview,
-    focusPreview,
-  ];
+  const previewElements = [colorPreview, textPreview, motionPreview, focusPreview];
 
   function renderAllPreviews() {
-    previewElements.forEach((previewEl) => {
+    previewElements.forEach(previewEl => {
       applyColors(state.colors, previewEl);
       applyText(state.text, previewEl);
       applyMotion(state.motion, previewEl);
@@ -418,31 +402,31 @@ export async function initPrefKeeper(options = {}) {
     });
   }
 
-  const hamburgerBtn = q(".pk-hamburger-btn");
-  const hamburgerMenu = q(".pk-hamburger-menu");
-  const settingsPanel = q(".pk-settings-panel");
-  const pauseLabel = q(".pk-pause-label");
-  const viewToggleBtn = q(".pk-view-toggle");
-  const closeBtn = q(".pk-close-btn");
+  const hamburgerBtn = q('.pk-hamburger-btn');
+  const hamburgerMenu = q('.pk-hamburger-menu');
+  const settingsPanel = q('.pk-settings-panel');
+  const pauseLabel = q('.pk-pause-label');
+  const viewToggleBtn = q('.pk-view-toggle');
+  const closeBtn = q('.pk-close-btn');
 
   // ---- Shared dirty-state, identical wording across all four tabs ----
   function refreshStatus() {
     let title, text;
     if (dirtyCategories.size === 0) {
-      title = "Saved";
-      text = "All changes saved.";
+      title = 'Saved';
+      text = 'All changes saved.';
     } else {
-      const names = [...dirtyCategories].map((c) => CATEGORY_LABELS[c]);
+      const names = [...dirtyCategories].map(c => CATEGORY_LABELS[c]);
       const joined =
         names.length === 1
           ? names[0]
-          : names.slice(0, -1).join(", ") + " and " + names[names.length - 1];
-      title = "Preview Mode";
+          : names.slice(0, -1).join(', ') + ' and ' + names[names.length - 1];
+      title = 'Preview Mode';
       text = `${joined} changes not saved.`;
     }
-    qa(".pk-preview-mode").forEach((block) => {
-      block.querySelector("strong").textContent = title;
-      block.querySelector("p").textContent = text;
+    qa('.pk-preview-mode').forEach(block => {
+      block.querySelector('strong').textContent = title;
+      block.querySelector('p').textContent = text;
     });
   }
 
@@ -462,28 +446,25 @@ export async function initPrefKeeper(options = {}) {
     const sat = +intensitySlider.value;
     const light = +brightnessSlider.value;
     const thumbColor = `hsl(${hue}, ${sat}%, ${light}%)`;
-    [colorSlider, intensitySlider, brightnessSlider].forEach((sl) =>
-      sl.style.setProperty("--thumb-color", thumbColor),
+    [colorSlider, intensitySlider, brightnessSlider].forEach(sl =>
+      sl.style.setProperty('--thumb-color', thumbColor)
     );
     intensitySlider.style.setProperty(
-      "--track-bg",
-      `linear-gradient(to top, hsl(${hue}, 0%, ${light}%), hsl(${hue}, 100%, ${light}%))`,
+      '--track-bg',
+      `linear-gradient(to top, hsl(${hue}, 0%, ${light}%), hsl(${hue}, 100%, ${light}%))`
     );
     brightnessSlider.style.setProperty(
-      "--track-bg",
-      `linear-gradient(to top, hsl(${hue}, ${sat}%, 0%), hsl(${hue}, ${sat}%, 50%), hsl(${hue}, ${sat}%, 100%))`,
+      '--track-bg',
+      `linear-gradient(to top, hsl(${hue}, ${sat}%, 0%), hsl(${hue}, ${sat}%, 50%), hsl(${hue}, ${sat}%, 100%))`
     );
   }
 
   function updateContrastBadge() {
-    const { level, ratio } = rateTokenContrast(
-      state.colors.text,
-      state.colors.background,
-    );
+    const { level, ratio } = rateTokenContrast(state.colors.text, state.colors.background);
     const labels = {
-      excellent: "Excellent",
-      acceptable: "Acceptable",
-      difficult: "Difficult",
+      excellent: 'Excellent',
+      acceptable: 'Acceptable',
+      difficult: 'Difficult'
     };
     contrastBadge.textContent = `${labels[level]} \u00B7 ${ratio.toFixed(1)}`;
     contrastBadge.className = `pk-contrast-badge pk-${level}`;
@@ -503,13 +484,13 @@ export async function initPrefKeeper(options = {}) {
     renderAllPreviews();
   }
 
-  targetSelect.addEventListener("change", () => {
+  targetSelect.addEventListener('change', () => {
     adjustingText.textContent = TARGET_LABELS[targetSelect.value];
     loadTargetIntoSliders(targetSelect.value);
   });
 
-  [colorSlider, intensitySlider, brightnessSlider].forEach((slider) => {
-    slider.addEventListener("input", () => {
+  [colorSlider, intensitySlider, brightnessSlider].forEach(slider => {
+    slider.addEventListener('input', () => {
       const target = targetSelect.value;
       // NOTE (v2 follow-up): once typed/numeric color inputs exist, their
       // values need to be clamped to 0-360/0-100/0-100 the same way a
@@ -519,12 +500,12 @@ export async function initPrefKeeper(options = {}) {
       state.colors[target] = {
         hue: +colorSlider.value,
         sat: +intensitySlider.value,
-        light: +brightnessSlider.value,
+        light: +brightnessSlider.value
       };
       updateSliderThumbAndTrack();
       updateContrastBadge();
       renderAllPreviews();
-      markCategoryDirty("colors");
+      markCategoryDirty('colors');
     });
   });
 
@@ -537,18 +518,18 @@ export async function initPrefKeeper(options = {}) {
     targetSelect.value = changedTarget;
     adjustingText.textContent = TARGET_LABELS[changedTarget];
     renderColors();
-    markCategoryDirty("colors");
+    markCategoryDirty('colors');
   }
 
-  contrastSelect.addEventListener("change", (e) => {
+  contrastSelect.addEventListener('change', e => {
     if (!e.target.value) return;
-    colorVisionSelect.value = "";
+    colorVisionSelect.value = '';
     applyColorPreset(contrastPresets[e.target.value]);
   });
 
-  colorVisionSelect.addEventListener("change", (e) => {
+  colorVisionSelect.addEventListener('change', e => {
     if (!e.target.value) return;
-    contrastSelect.value = "";
+    contrastSelect.value = '';
     applyColorPreset(colorVisionPresets[e.target.value]);
   });
 
@@ -558,37 +539,32 @@ export async function initPrefKeeper(options = {}) {
     lineHeightSlider.value = state.text.lineHeight * 10;
     letterSpacingSlider.value = state.text.letterSpacing;
     wordSpacingSlider.value = state.text.wordSpacing;
-    q(".pk-font-size-out").textContent = `${state.text.fontSize}%`;
-    q(".pk-line-height-out").textContent = state.text.lineHeight;
-    q(".pk-letter-spacing-out").textContent = `${state.text.letterSpacing}px`;
-    q(".pk-word-spacing-out").textContent = `${state.text.wordSpacing}px`;
-    fontChoiceInputs.forEach((input) => {
+    q('.pk-font-size-out').textContent = `${state.text.fontSize}%`;
+    q('.pk-line-height-out').textContent = state.text.lineHeight;
+    q('.pk-letter-spacing-out').textContent = `${state.text.letterSpacing}px`;
+    q('.pk-word-spacing-out').textContent = `${state.text.wordSpacing}px`;
+    fontChoiceInputs.forEach(input => {
       input.checked = input.value === state.text.fontFamily;
     });
     renderAllPreviews();
   }
 
-  [
-    fontSizeSlider,
-    lineHeightSlider,
-    letterSpacingSlider,
-    wordSpacingSlider,
-  ].forEach((slider) => {
-    slider.addEventListener("input", () => {
+  [fontSizeSlider, lineHeightSlider, letterSpacingSlider, wordSpacingSlider].forEach(slider => {
+    slider.addEventListener('input', () => {
       state.text.fontSize = +fontSizeSlider.value;
       state.text.lineHeight = +lineHeightSlider.value / 10;
       state.text.letterSpacing = +letterSpacingSlider.value;
       state.text.wordSpacing = +wordSpacingSlider.value;
       renderText();
-      markCategoryDirty("text");
+      markCategoryDirty('text');
     });
   });
 
-  fontChoiceInputs.forEach((input) => {
-    input.addEventListener("change", () => {
+  fontChoiceInputs.forEach(input => {
+    input.addEventListener('change', () => {
       state.text.fontFamily = input.value;
       renderText();
-      markCategoryDirty("text");
+      markCategoryDirty('text');
     });
   });
 
@@ -598,33 +574,33 @@ export async function initPrefKeeper(options = {}) {
     renderAllPreviews();
   }
 
-  reduceMotionToggle.addEventListener("change", () => {
+  reduceMotionToggle.addEventListener('change', () => {
     state.motion.reduceMotion = reduceMotionToggle.checked;
     renderMotion();
-    markCategoryDirty("motion");
+    markCategoryDirty('motion');
   });
 
   // ---- FOCUS TAB ----
   function renderFocus() {
     focusColorSlider.value = state.focus.outlineColor.hue;
     focusColorSlider.style.setProperty(
-      "--thumb-color",
-      `hsl(${state.focus.outlineColor.hue}, 100%, 50%)`,
+      '--thumb-color',
+      `hsl(${state.focus.outlineColor.hue}, 100%, 50%)`
     );
     focusWidthSlider.value = state.focus.outlineWidth;
     renderAllPreviews();
   }
 
-  [focusColorSlider, focusWidthSlider].forEach((slider) => {
-    slider.addEventListener("input", () => {
+  [focusColorSlider, focusWidthSlider].forEach(slider => {
+    slider.addEventListener('input', () => {
       state.focus.outlineColor = {
         hue: +focusColorSlider.value,
         sat: 100,
-        light: 50,
+        light: 50
       };
       state.focus.outlineWidth = +focusWidthSlider.value;
       renderFocus();
-      markCategoryDirty("focus");
+      markCategoryDirty('focus');
     });
   });
 
@@ -633,19 +609,19 @@ export async function initPrefKeeper(options = {}) {
     colors: colorDefaults,
     text: textDefaults,
     motion: motionDefaults,
-    focus: focusDefaults,
+    focus: focusDefaults
   };
   const CATEGORY_RENDERERS = {
     colors: renderColors,
     text: renderText,
     motion: renderMotion,
-    focus: renderFocus,
+    focus: renderFocus
   };
   const RESET_LABELS = {
-    colors: "Reset Colors",
-    text: "Reset Text",
-    motion: "Reset Motion",
-    focus: "Reset Focus",
+    colors: 'Reset Colors',
+    text: 'Reset Text',
+    motion: 'Reset Motion',
+    focus: 'Reset Focus'
   };
 
   function resetCategory(category) {
@@ -654,17 +630,17 @@ export async function initPrefKeeper(options = {}) {
     markCategoryDirty(category);
   }
 
-  resetBtn.addEventListener("click", () => {
-    const activeTab = q(".pk-tab.pk-active").dataset.panel;
+  resetBtn.addEventListener('click', () => {
+    const activeTab = q('.pk-tab.pk-active').dataset.panel;
     resetCategory(activeTab);
   });
 
   // ---- Tab switching ----
-  tabs.forEach((tab) => {
-    tab.addEventListener("click", () => {
-      tabs.forEach((t) => t.classList.remove("pk-active"));
-      tab.classList.add("pk-active");
-      panels.forEach((p) => {
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      tabs.forEach(t => t.classList.remove('pk-active'));
+      tab.classList.add('pk-active');
+      panels.forEach(p => {
         p.hidden = p.dataset.panel !== tab.dataset.panel;
       });
       resetLabel.textContent = RESET_LABELS[tab.dataset.panel];
@@ -672,48 +648,46 @@ export async function initPrefKeeper(options = {}) {
   });
 
   // ---- Save (Track 1 -> storage only, never touches the real page) ----
-  q(".pk-save-btn").addEventListener("click", async () => {
+  q('.pk-save-btn').addEventListener('click', async () => {
     await storage.set(state);
     markAllSaved();
   });
 
   // ---- Hamburger menu ----
-  hamburgerBtn.addEventListener("click", () => {
+  hamburgerBtn.addEventListener('click', () => {
     const isOpen = !hamburgerMenu.hidden;
     hamburgerMenu.hidden = isOpen;
-    hamburgerBtn.setAttribute("aria-expanded", String(!isOpen));
+    hamburgerBtn.setAttribute('aria-expanded', String(!isOpen));
   });
 
-  document.addEventListener("click", (e) => {
+  document.addEventListener('click', e => {
     if (!hamburgerMenu.contains(e.target) && !hamburgerBtn.contains(e.target)) {
       hamburgerMenu.hidden = true;
     }
   });
 
-  q(".pk-menu-import").addEventListener("click", () => {
+  q('.pk-menu-import').addEventListener('click', () => {
     hamburgerMenu.hidden = true; // Import panel: future work
   });
-  q(".pk-menu-export").addEventListener("click", () => {
+  q('.pk-menu-export').addEventListener('click', () => {
     hamburgerMenu.hidden = true; // Export panel: future work
   });
-  q(".pk-menu-help").addEventListener("click", () => {
+  q('.pk-menu-help').addEventListener('click', () => {
     hamburgerMenu.hidden = true; // Help content: future work
   });
 
-  q(".pk-menu-settings").addEventListener("click", () => {
+  q('.pk-menu-settings').addEventListener('click', () => {
     hamburgerMenu.hidden = true;
     settingsPanel.hidden = false;
   });
-  q(".pk-settings-close-btn").addEventListener("click", () => {
+  q('.pk-settings-close-btn').addEventListener('click', () => {
     settingsPanel.hidden = true;
   });
 
   let autoLoadPaused = false;
-  q(".pk-menu-pause").addEventListener("click", () => {
+  q('.pk-menu-pause').addEventListener('click', () => {
     autoLoadPaused = !autoLoadPaused;
-    pauseLabel.textContent = autoLoadPaused
-      ? "Resume Auto-Load"
-      : "Pause Auto-Load";
+    pauseLabel.textContent = autoLoadPaused ? 'Resume Auto-Load' : 'Pause Auto-Load';
     // Real implementation (once the extension exists): dispatch a
     // CustomEvent on window that the extension's content script
     // listens for. This page never calls the extension directly —
@@ -721,14 +695,14 @@ export async function initPrefKeeper(options = {}) {
     hamburgerMenu.hidden = true;
   });
 
-  q(".pk-menu-clear").addEventListener("click", async () => {
+  q('.pk-menu-clear').addEventListener('click', async () => {
     const confirmed = confirm(
-      "This will permanently erase all your saved preferences and restore this site to its designer's original look. This cannot be undone. Continue?",
+      "This will permanently erase all your saved preferences and restore this site to its designer's original look. This cannot be undone. Continue?"
     );
     hamburgerMenu.hidden = true;
     if (!confirmed) return;
     await storage.clear();
-    Object.keys(CATEGORY_RENDERERS).forEach((category) => {
+    Object.keys(CATEGORY_RENDERERS).forEach(category => {
       state[category] = JSON.parse(JSON.stringify(CATEGORY_DEFAULTS[category]));
       CATEGORY_RENDERERS[category]();
     });
@@ -743,23 +717,21 @@ export async function initPrefKeeper(options = {}) {
   let viewingSiteDefault = false;
   let savedInlineStyles = null;
 
-  viewToggleBtn.addEventListener("click", () => {
-    const affected = qa(".pk-preview, .pk-focus-demo");
+  viewToggleBtn.addEventListener('click', () => {
+    const affected = qa('.pk-preview, .pk-focus-demo');
     viewingSiteDefault = !viewingSiteDefault;
     if (viewingSiteDefault) {
       savedInlineStyles = new Map();
-      affected.forEach((node) =>
-        savedInlineStyles.set(node, node.getAttribute("style")),
-      );
-      affected.forEach((node) => node.removeAttribute("style"));
-      viewToggleBtn.textContent = "View My Preferences";
+      affected.forEach(node => savedInlineStyles.set(node, node.getAttribute('style')));
+      affected.forEach(node => node.removeAttribute('style'));
+      viewToggleBtn.textContent = 'View My Preferences';
     } else {
-      affected.forEach((node) => {
+      affected.forEach(node => {
         const style = savedInlineStyles.get(node);
-        if (style) node.setAttribute("style", style);
-        else node.removeAttribute("style");
+        if (style) node.setAttribute('style', style);
+        else node.removeAttribute('style');
       });
-      viewToggleBtn.textContent = "View Site Default";
+      viewToggleBtn.textContent = 'View Site Default';
     }
   });
 
@@ -767,7 +739,7 @@ export async function initPrefKeeper(options = {}) {
   async function handleClose() {
     if (dirtyCategories.size > 0) {
       const confirmed = confirm(
-        'You have unsaved changes.\n\nClick OK for "Save and Close," or Cancel to keep editing.',
+        'You have unsaved changes.\n\nClick OK for "Save and Close," or Cancel to keep editing.'
       );
       if (!confirmed) return;
       await storage.set(state);
@@ -775,10 +747,10 @@ export async function initPrefKeeper(options = {}) {
     }
     const saved = await storage.get();
     applyState(saved, document.documentElement);
-    container.style.display = "none";
+    container.style.display = 'none';
   }
 
-  closeBtn.addEventListener("click", handleClose);
+  closeBtn.addEventListener('click', handleClose);
 
   // NOTE: deliberately NOT wiring a backdrop click to close the panel.
   // The X button (with its unsaved-changes check) is the only way to
@@ -802,6 +774,6 @@ export async function initPrefKeeper(options = {}) {
 
   return {
     container,
-    close: () => closeBtn.click(),
+    close: () => closeBtn.click()
   };
 }

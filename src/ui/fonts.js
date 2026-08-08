@@ -46,16 +46,14 @@
  * see the PR/commit notes for the exact check.
  */
 
-const FONT_FAMILY = "Atkinson Hyperlegible Next";
+const FONT_FAMILY = 'Atkinson Hyperlegible Next';
 
 // Captured ONCE, synchronously, at the moment this module first
 // executes — not lazily inside injectFontFaces(), which usually runs
 // later from an async event handler by which point
 // document.currentScript would already be null.
 const SCRIPT_BASE =
-  (typeof document !== "undefined" &&
-    document.currentScript &&
-    document.currentScript.src) ||
+  (typeof document !== 'undefined' && document.currentScript && document.currentScript.src) ||
   import.meta.url;
 
 function fontUrl(filename) {
@@ -64,71 +62,71 @@ function fontUrl(filename) {
 
 const FONT_FACES = [
   {
-    file: "AtkinsonHyperlegibleNext-ExtraLight.woff2",
+    file: 'AtkinsonHyperlegibleNext-ExtraLight.woff2',
     weight: 200,
-    style: "normal",
+    style: 'normal'
   },
   {
-    file: "AtkinsonHyperlegibleNext-ExtraLightItalic.woff2",
+    file: 'AtkinsonHyperlegibleNext-ExtraLightItalic.woff2',
     weight: 200,
-    style: "italic",
+    style: 'italic'
   },
   {
-    file: "AtkinsonHyperlegibleNext-Light.woff2",
+    file: 'AtkinsonHyperlegibleNext-Light.woff2',
     weight: 300,
-    style: "normal",
+    style: 'normal'
   },
   {
-    file: "AtkinsonHyperlegibleNext-LightItalic.woff2",
+    file: 'AtkinsonHyperlegibleNext-LightItalic.woff2',
     weight: 300,
-    style: "italic",
+    style: 'italic'
   },
   {
-    file: "AtkinsonHyperlegibleNext-Regular.woff2",
+    file: 'AtkinsonHyperlegibleNext-Regular.woff2',
     weight: 400,
-    style: "normal",
+    style: 'normal'
   },
   {
-    file: "AtkinsonHyperlegibleNext-RegularItalic.woff2",
+    file: 'AtkinsonHyperlegibleNext-RegularItalic.woff2',
     weight: 400,
-    style: "italic",
+    style: 'italic'
   },
   {
-    file: "AtkinsonHyperlegibleNext-Medium.woff2",
+    file: 'AtkinsonHyperlegibleNext-Medium.woff2',
     weight: 500,
-    style: "normal",
+    style: 'normal'
   },
   {
-    file: "AtkinsonHyperlegibleNext-MediumItalic.woff2",
+    file: 'AtkinsonHyperlegibleNext-MediumItalic.woff2',
     weight: 500,
-    style: "italic",
+    style: 'italic'
   },
   {
-    file: "AtkinsonHyperlegibleNext-SemiBold.woff2",
+    file: 'AtkinsonHyperlegibleNext-SemiBold.woff2',
     weight: 600,
-    style: "normal",
+    style: 'normal'
   },
   {
-    file: "AtkinsonHyperlegibleNext-SemiBoldItalic.woff2",
+    file: 'AtkinsonHyperlegibleNext-SemiBoldItalic.woff2',
     weight: 600,
-    style: "italic",
+    style: 'italic'
   },
-  { file: "AtkinsonHyperlegibleNext-Bold.woff2", weight: 700, style: "normal" },
+  { file: 'AtkinsonHyperlegibleNext-Bold.woff2', weight: 700, style: 'normal' },
   {
-    file: "AtkinsonHyperlegibleNext-BoldItalic.woff2",
+    file: 'AtkinsonHyperlegibleNext-BoldItalic.woff2',
     weight: 700,
-    style: "italic",
+    style: 'italic'
   },
   {
-    file: "AtkinsonHyperlegibleNext-ExtraBold.woff2",
+    file: 'AtkinsonHyperlegibleNext-ExtraBold.woff2',
     weight: 800,
-    style: "normal",
+    style: 'normal'
   },
   {
-    file: "AtkinsonHyperlegibleNext-ExtraBoldItalic.woff2",
+    file: 'AtkinsonHyperlegibleNext-ExtraBoldItalic.woff2',
     weight: 800,
-    style: "italic",
-  },
+    style: 'italic'
+  }
 ];
 
 let injected = false;
@@ -156,17 +154,17 @@ export function injectFontFaces() {
         font-style: ${style};
         font-display: swap;
       }
-    `,
+    `
     );
 
-    const styleTag = document.createElement("style");
-    styleTag.setAttribute("data-prefkeeper-fonts", "");
-    styleTag.textContent = rules.join("\n");
+    const styleTag = document.createElement('style');
+    styleTag.setAttribute('data-prefkeeper-fonts', '');
+    styleTag.textContent = rules.join('\n');
     document.head.appendChild(styleTag);
   } catch (err) {
     console.warn(
-      "PrefKeeper: could not load Atkinson Hyperlegible Next, falling back to system font.",
-      err,
+      'PrefKeeper: could not load Atkinson Hyperlegible Next, falling back to system font.',
+      err
     );
   }
 }

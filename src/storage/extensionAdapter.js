@@ -17,13 +17,13 @@
  */
 
 export async function get() {
-  throw new Error("extensionAdapter is not implemented yet.");
+  throw new Error('extensionAdapter is not implemented yet.');
 }
 
 export async function set() {
-  throw new Error("extensionAdapter is not implemented yet.");
+  throw new Error('extensionAdapter is not implemented yet.');
 }
 
 export async function clear() {
-  throw new Error("extensionAdapter is not implemented yet.");
+  throw new Error('extensionAdapter is not implemented yet.');
 }

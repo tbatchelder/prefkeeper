@@ -19,43 +19,43 @@
  */
 export const CONTRAST_PRESETS = {
   high: {
-    label: "High contrast",
+    label: 'High contrast',
     values: {
       background: { hue: 0, sat: 0, light: 100 },
       text: { hue: 0, sat: 0, light: 0 },
       primary: { hue: 0, sat: 0, light: 0 },
       onPrimary: { hue: 0, sat: 0, light: 100 },
-      link: { hue: 240, sat: 100, light: 45 },
-    },
+      link: { hue: 240, sat: 100, light: 45 }
+    }
   },
   low: {
-    label: "Low contrast",
+    label: 'Low contrast',
     values: {
       background: { hue: 0, sat: 0, light: 92 },
       text: { hue: 0, sat: 0, light: 42 },
       primary: { hue: 0, sat: 0, light: 62 },
       onPrimary: { hue: 0, sat: 0, light: 100 },
-      link: { hue: 0, sat: 0, light: 48 },
-    },
+      link: { hue: 0, sat: 0, light: 48 }
+    }
   },
   dark: {
-    label: "Dark mode",
+    label: 'Dark mode',
     values: {
       background: { hue: 0, sat: 0, light: 12 },
       text: { hue: 0, sat: 0, light: 94 },
       primary: { hue: 210, sat: 75, light: 55 },
       onPrimary: { hue: 210, sat: 80, light: 10 },
-      link: { hue: 45, sat: 90, light: 65 },
-    },
+      link: { hue: 45, sat: 90, light: 65 }
+    }
   },
   light: {
-    label: "Light mode",
+    label: 'Light mode',
     values: {
       background: { hue: 0, sat: 0, light: 100 },
       text: { hue: 0, sat: 0, light: 13 },
       primary: { hue: 210, sat: 80, light: 50 },
       onPrimary: { hue: 0, sat: 0, light: 100 },
-      link: { hue: 210, sat: 80, light: 40 },
-    },
-  },
+      link: { hue: 210, sat: 80, light: 40 }
+    }
+  }
 };

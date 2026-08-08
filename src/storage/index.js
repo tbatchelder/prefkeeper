@@ -16,8 +16,8 @@
  * once, here.
  */
 
-import { getDefaultState } from "../core/tokens.js";
-import * as localStorageAdapter from "./localStorageAdapter.js";
+import { getDefaultState } from '../core/tokens.js';
+import * as localStorageAdapter from './localStorageAdapter.js';
 
 // Hardcoded for now — the only adapter that exists. Once extensionAdapter.js
 // is real, this becomes a small detection step (e.g. "is this running
@@ -39,40 +39,35 @@ const activeAdapter = localStorageAdapter;
  * not the whole security story.
  */
 export function isValidState(state) {
-  if (!state || typeof state !== "object") return false;
+  if (!state || typeof state !== 'object') return false;
 
-  const isColorToken = (c) =>
+  const isColorToken = c =>
     c &&
-    typeof c === "object" &&
-    typeof c.hue === "number" &&
-    typeof c.sat === "number" &&
-    typeof c.light === "number";
+    typeof c === 'object' &&
+    typeof c.hue === 'number' &&
+    typeof c.sat === 'number' &&
+    typeof c.light === 'number';
 
   const { colors, text, motion, focus } = state;
 
-  if (!colors || typeof colors !== "object") return false;
-  const colorTargets = ["background", "text", "primary", "onPrimary", "link"];
-  if (!colorTargets.every((target) => isColorToken(colors[target])))
-    return false;
+  if (!colors || typeof colors !== 'object') return false;
+  const colorTargets = ['background', 'text', 'primary', 'onPrimary', 'link'];
+  if (!colorTargets.every(target => isColorToken(colors[target]))) return false;
 
   if (
     !text ||
-    typeof text.fontSize !== "number" ||
-    typeof text.lineHeight !== "number" ||
-    typeof text.letterSpacing !== "number" ||
-    typeof text.wordSpacing !== "number" ||
-    !["site", "atkinson"].includes(text.fontFamily)
+    typeof text.fontSize !== 'number' ||
+    typeof text.lineHeight !== 'number' ||
+    typeof text.letterSpacing !== 'number' ||
+    typeof text.wordSpacing !== 'number' ||
+    !['site', 'atkinson'].includes(text.fontFamily)
   ) {
     return false;
   }
 
-  if (!motion || typeof motion.reduceMotion !== "boolean") return false;
+  if (!motion || typeof motion.reduceMotion !== 'boolean') return false;
 
-  if (
-    !focus ||
-    !isColorToken(focus.outlineColor) ||
-    typeof focus.outlineWidth !== "number"
-  ) {
+  if (!focus || !isColorToken(focus.outlineColor) || typeof focus.outlineWidth !== 'number') {
     return false;
   }
 
@@ -99,9 +94,7 @@ export async function get() {
  */
 export async function set(state) {
   if (!isValidState(state)) {
-    throw new Error(
-      "Refusing to save: state does not match the expected preferences shape.",
-    );
+    throw new Error('Refusing to save: state does not match the expected preferences shape.');
   }
   await activeAdapter.set(state);
 }
@@ -138,9 +131,7 @@ export function importState(jsonString) {
   }
 
   if (!isValidState(parsed)) {
-    throw new Error(
-      "That JSON doesn't match the expected PrefKeeper preferences format.",
-    );
+    throw new Error("That JSON doesn't match the expected PrefKeeper preferences format.");
   }
 
   return parsed;
