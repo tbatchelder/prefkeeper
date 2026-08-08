@@ -40,6 +40,10 @@ import { injectFontFaces } from './fonts.js';
 import { CONTRAST_PRESETS as DEFAULT_CONTRAST_PRESETS } from '../presets/contrast.js';
 import { COLOR_VISION_PRESETS as DEFAULT_COLOR_VISION_PRESETS } from '../presets/colorblind.js';
 import { el } from '../utils/dom.js';
+import { buildImportScreen } from './components/import.js';
+import { buildExportScreen } from './components/export.js';
+import { buildHelpScreen } from './components/help.js';
+import { buildSettingsScreen } from './components/settings.js';
 
 // NOTE: the actual preset DATA (High Contrast, Dark Mode, Deuteranopia,
 // etc.) now lives in src/presets/ -- not here. This file only imports
@@ -115,13 +119,19 @@ function buildTemplate() {
         <button class="pk-menu-item pk-menu-item-danger pk-menu-clear" type="button">Clear All Saved Preferences</button>
       </div>
 
-      <div class="pk-settings-panel" hidden>
-        <h3>Settings</h3>
-        <label class="pk-settings-row">
-          <input type="checkbox" class="pk-auto-load-toggle" checked>
-          Auto-load my preferences on every page
-        </label>
-        <button class="pk-footer-btn pk-settings-close-btn" type="button">Done</button>
+      <!-- Covers the ENTIRE app (tabs included), not just Preview/Controls.
+           Chosen over disabling/hiding individual buttons -- that would need
+           real state tracking across seven separate controls (4 tabs + Save
+           + Reset + View Default) to get right, and a half-disabled
+           background is exactly the kind of thing that trips up keyboard/
+           screen-reader users, which is a bad look for an accessibility tool
+           specifically. A full block makes the bad state impossible to
+           reach at all, rather than requiring careful prevention every time. -->
+      <div class="pk-hamburger-screen" hidden>
+        <header class="pk-hamburger-screen-header">
+          <button class="pk-hamburger-back-btn" type="button">&larr; Back</button>
+        </header>
+        <div class="pk-hamburger-screen-content"></div>
       </div>
 
       <main class="pk-content" data-panel="colors">
@@ -345,6 +355,7 @@ export async function initPrefKeeper(options = {}) {
   // the visible controls every time.
   const state = await storage.get();
   const dirtyCategories = new Set();
+  let autoLoadPaused = (await storage.getSettings()).autoLoadPaused;
 
   // ---- Scoped element refs (container-scoped, never document.*) ----
   const q = selector => container.querySelector(selector);
@@ -404,7 +415,9 @@ export async function initPrefKeeper(options = {}) {
 
   const hamburgerBtn = q('.pk-hamburger-btn');
   const hamburgerMenu = q('.pk-hamburger-menu');
-  const settingsPanel = q('.pk-settings-panel');
+  const hamburgerScreen = q('.pk-hamburger-screen');
+  const hamburgerScreenContent = q('.pk-hamburger-screen-content');
+  const hamburgerBackBtn = q('.pk-hamburger-back-btn');
   const pauseLabel = q('.pk-pause-label');
   const viewToggleBtn = q('.pk-view-toggle');
   const closeBtn = q('.pk-close-btn');
@@ -666,28 +679,114 @@ export async function initPrefKeeper(options = {}) {
     }
   });
 
+  // Opens the full-app-covering screen with a given component's markup.
+  // `onOpen` runs AFTER the markup is in the DOM, for any wiring that
+  // needs real elements to attach to (a component file only builds a
+  // template string -- it has no access to `state`/`storage`/event
+  // wiring, that all lives here).
+  function openHamburgerScreen(buildFn, onOpen) {
+    hamburgerMenu.hidden = true;
+    hamburgerScreenContent.innerHTML = buildFn();
+    if (onOpen) onOpen();
+    hamburgerScreen.hidden = false;
+  }
+
+  hamburgerBackBtn.addEventListener('click', () => {
+    hamburgerScreen.hidden = true;
+    hamburgerScreenContent.innerHTML = '';
+  });
+
+  // ---- Import ----
   q('.pk-menu-import').addEventListener('click', () => {
-    hamburgerMenu.hidden = true; // Import panel: future work
+    openHamburgerScreen(buildImportScreen, () => {
+      const input = hamburgerScreenContent.querySelector('.pk-import-input');
+      const errorEl = hamburgerScreenContent.querySelector('.pk-import-error');
+      hamburgerScreenContent.querySelector('.pk-import-apply').addEventListener('click', () => {
+        if (dirtyCategories.size > 0) {
+          const confirmed = confirm(
+            'You have unsaved changes that will be lost if you import. Continue?'
+          );
+          if (!confirmed) return;
+        }
+        let imported;
+        try {
+          // storage.importState() already validates shape/structure --
+          // the same shared check every path into storage goes
+          // through, not a separate ad hoc parser.
+          imported = storage.importState(input.value);
+        } catch (err) {
+          errorEl.textContent = err.message;
+          errorEl.hidden = false;
+          return;
+        }
+        errorEl.hidden = true;
+        state.colors = imported.colors;
+        state.text = imported.text;
+        state.motion = imported.motion;
+        state.focus = imported.focus;
+        Object.keys(CATEGORY_RENDERERS).forEach(category => {
+          CATEGORY_RENDERERS[category]();
+          markCategoryDirty(category);
+        });
+        hamburgerScreen.hidden = true;
+        hamburgerScreenContent.innerHTML = '';
+      });
+    });
   });
+
+  // ---- Export ----
   q('.pk-menu-export').addEventListener('click', () => {
-    hamburgerMenu.hidden = true; // Export panel: future work
+    openHamburgerScreen(buildExportScreen, () => {
+      const output = hamburgerScreenContent.querySelector('.pk-export-output');
+      output.value = storage.exportState(state);
+
+      hamburgerScreenContent.querySelector('.pk-export-copy').addEventListener('click', () => {
+        navigator.clipboard.writeText(output.value);
+      });
+
+      hamburgerScreenContent.querySelector('.pk-export-download').addEventListener('click', () => {
+        const blob = new Blob([output.value], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'prefkeeper-preferences.json';
+        link.click();
+        URL.revokeObjectURL(url);
+      });
+    });
   });
+
+  // ---- Help ----
   q('.pk-menu-help').addEventListener('click', () => {
-    hamburgerMenu.hidden = true; // Help content: future work
+    openHamburgerScreen(buildHelpScreen);
   });
+
+  // ---- Settings ----
+  function updatePauseLabel() {
+    pauseLabel.textContent = autoLoadPaused ? 'Resume Auto-Load' : 'Pause Auto-Load';
+  }
+
+  async function setAutoLoadPaused(value) {
+    autoLoadPaused = value;
+    await storage.setSettings({ autoLoadPaused });
+    updatePauseLabel();
+  }
 
   q('.pk-menu-settings').addEventListener('click', () => {
-    hamburgerMenu.hidden = true;
-    settingsPanel.hidden = false;
-  });
-  q('.pk-settings-close-btn').addEventListener('click', () => {
-    settingsPanel.hidden = true;
+    openHamburgerScreen(buildSettingsScreen, () => {
+      const toggle = hamburgerScreenContent.querySelector('.pk-auto-load-toggle');
+      toggle.checked = !autoLoadPaused;
+      toggle.addEventListener('change', () => {
+        setAutoLoadPaused(!toggle.checked);
+      });
+    });
   });
 
-  let autoLoadPaused = false;
+  // Pause and the Settings toggle share the SAME boolean -- Pause is
+  // just a one-tap shortcut to it from the hamburger, for showing the
+  // site to someone else without preferences applied.
   q('.pk-menu-pause').addEventListener('click', () => {
-    autoLoadPaused = !autoLoadPaused;
-    pauseLabel.textContent = autoLoadPaused ? 'Resume Auto-Load' : 'Pause Auto-Load';
+    setAutoLoadPaused(!autoLoadPaused);
     // Real implementation (once the extension exists): dispatch a
     // CustomEvent on window that the extension's content script
     // listens for. This page never calls the extension directly —
@@ -736,6 +835,13 @@ export async function initPrefKeeper(options = {}) {
   });
 
   // ---- Close (the ONLY place Track 2 -- the real host page -- gets touched) ----
+  // Gated on autoLoadPaused: if paused (e.g. showing the site to someone
+  // else without prefs applied), Close shouldn't quietly reapply them --
+  // that would defeat the entire point of pausing mid-demo.
+  function applyToRealPageIfNotPaused(stateToApply) {
+    if (!autoLoadPaused) applyState(stateToApply, document.documentElement);
+  }
+
   async function handleClose() {
     if (dirtyCategories.size > 0) {
       const confirmed = confirm(
@@ -746,7 +852,7 @@ export async function initPrefKeeper(options = {}) {
       markAllSaved();
     }
     const saved = await storage.get();
-    applyState(saved, document.documentElement);
+    applyToRealPageIfNotPaused(saved);
     container.style.display = 'none';
   }
 
@@ -763,6 +869,7 @@ export async function initPrefKeeper(options = {}) {
   renderMotion();
   renderFocus();
   resetLabel.textContent = RESET_LABELS.colors;
+  updatePauseLabel();
   // Nothing has been edited yet -- sync the status text to reflect
   // that, rather than leaving the template's hardcoded placeholder
   // ("Preview Mode / Changes are not saved") displayed by default.
@@ -770,7 +877,7 @@ export async function initPrefKeeper(options = {}) {
 
   // The real host page reflects whatever was already saved, immediately
   // on load -- independent of whether the panel is even opened this visit.
-  applyState(state, document.documentElement);
+  applyToRealPageIfNotPaused(state);
 
   return {
     container,

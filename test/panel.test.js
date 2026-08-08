@@ -48,6 +48,7 @@ function flushPromises() {
 beforeEach(() => {
   localStorage.clear();
   document.body.innerHTML = '';
+  document.documentElement.removeAttribute('style');
   document.head.querySelectorAll('[data-prefkeeper-fonts]').forEach(el => el.remove());
 });
 
@@ -335,5 +336,163 @@ describe('hamburger menu', () => {
 
     expect(localStorage.getItem('prefkeeper-preferences')).toBeNull();
     expect(q('.pk-preview-mode strong').textContent).toBe('Saved');
+  });
+});
+
+describe('hamburger screens (overlay-on-overlay)', () => {
+  it('Help opens the full-app-covering screen with content, Back closes it', async () => {
+    await initPrefKeeper();
+    fireClick(q('.pk-hamburger-btn'));
+    fireClick(q('.pk-menu-help'));
+
+    expect(q('.pk-hamburger-screen').hidden).toBe(false);
+    expect(q('.pk-hamburger-screen-content').textContent).toContain('Help');
+
+    fireClick(q('.pk-hamburger-back-btn'));
+    expect(q('.pk-hamburger-screen').hidden).toBe(true);
+  });
+
+  describe('Export', () => {
+    it('pre-fills the textarea with the current state as JSON', async () => {
+      await initPrefKeeper();
+      fireInput(q('.pk-color-slider'), 55);
+      fireClick(q('.pk-hamburger-btn'));
+      fireClick(q('.pk-menu-export'));
+
+      const output = q('.pk-export-output');
+      const parsed = JSON.parse(output.value);
+      expect(parsed.colors.background.hue).toBe(55);
+    });
+
+    it('Copy All writes the textarea contents to the clipboard', async () => {
+      const writeText = vi.fn();
+      Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true });
+
+      await initPrefKeeper();
+      fireClick(q('.pk-hamburger-btn'));
+      fireClick(q('.pk-menu-export'));
+      fireClick(q('.pk-export-copy'));
+
+      expect(writeText).toHaveBeenCalledWith(q('.pk-export-output').value);
+    });
+  });
+
+  describe('Import', () => {
+    it('applies valid imported JSON and marks all four categories dirty', async () => {
+      await initPrefKeeper();
+      const validJson = JSON.stringify({
+        colors: {
+          background: { hue: 1, sat: 1, light: 1 },
+          text: { hue: 2, sat: 2, light: 2 },
+          primary: { hue: 3, sat: 3, light: 3 },
+          onPrimary: { hue: 4, sat: 4, light: 4 },
+          link: { hue: 5, sat: 5, light: 5 }
+        },
+        text: {
+          fontSize: 110,
+          lineHeight: 1.6,
+          letterSpacing: 1,
+          wordSpacing: 1,
+          fontFamily: 'site'
+        },
+        motion: { reduceMotion: true },
+        focus: { outlineColor: { hue: 6, sat: 6, light: 6 }, outlineWidth: 4 }
+      });
+
+      fireClick(q('.pk-hamburger-btn'));
+      fireClick(q('.pk-menu-import'));
+      q('.pk-import-input').value = validJson;
+      fireClick(q('.pk-import-apply'));
+
+      expect(q('.pk-hamburger-screen').hidden).toBe(true);
+      expect(q('.pk-color-slider').value).toBe('1');
+      expect(q('.pk-preview-mode p').textContent).toBe(
+        'Color, Text, Motion and Focus changes not saved.'
+      );
+    });
+
+    it('shows an inline error and does not apply anything on invalid JSON', async () => {
+      await initPrefKeeper();
+      fireClick(q('.pk-hamburger-btn'));
+      fireClick(q('.pk-menu-import'));
+      q('.pk-import-input').value = '{not valid json';
+      fireClick(q('.pk-import-apply'));
+
+      expect(q('.pk-hamburger-screen').hidden).toBe(false); // stays open
+      const errorEl = q('.pk-import-error');
+      expect(errorEl.hidden).toBe(false);
+      expect(errorEl.textContent).toMatch(/valid JSON/);
+      expect(q('.pk-preview-mode strong').textContent).toBe('Saved'); // nothing marked dirty
+    });
+
+    it('warns before overwriting when there are unsaved changes', async () => {
+      const confirmMock = vi.fn(() => false);
+      vi.stubGlobal('confirm', confirmMock);
+
+      await initPrefKeeper();
+      fireInput(q('.pk-color-slider'), 200); // unsaved change present
+
+      fireClick(q('.pk-hamburger-btn'));
+      fireClick(q('.pk-menu-import'));
+      q('.pk-import-input').value = '{}';
+      fireClick(q('.pk-import-apply'));
+
+      expect(confirmMock).toHaveBeenCalled();
+      // Cancelled -- original unsaved slider value should remain untouched
+      expect(q('.pk-color-slider').value).toBe('200');
+    });
+  });
+
+  describe('Settings and Pause (shared boolean)', () => {
+    it('Settings checkbox starts checked (auto-load on) by default', async () => {
+      await initPrefKeeper();
+      fireClick(q('.pk-hamburger-btn'));
+      fireClick(q('.pk-menu-settings'));
+
+      expect(q('.pk-auto-load-toggle').checked).toBe(true);
+    });
+
+    it('unchecking the Settings toggle persists autoLoadPaused and updates the Pause label', async () => {
+      await initPrefKeeper();
+      fireClick(q('.pk-hamburger-btn'));
+      fireClick(q('.pk-menu-settings'));
+      const toggle = q('.pk-auto-load-toggle');
+      toggle.checked = false;
+      toggle.dispatchEvent(new Event('change', { bubbles: true }));
+      await flushPromises();
+
+      const saved = JSON.parse(localStorage.getItem('prefkeeper-settings'));
+      expect(saved.autoLoadPaused).toBe(true);
+
+      fireClick(q('.pk-hamburger-back-btn'));
+      fireClick(q('.pk-hamburger-btn'));
+      expect(q('.pk-pause-label').textContent).toBe('Resume Auto-Load');
+    });
+
+    it('the Pause menu item toggles the same boolean the Settings checkbox uses', async () => {
+      await initPrefKeeper();
+      fireClick(q('.pk-hamburger-btn'));
+      fireClick(q('.pk-menu-pause'));
+      await flushPromises();
+
+      const saved = JSON.parse(localStorage.getItem('prefkeeper-settings'));
+      expect(saved.autoLoadPaused).toBe(true);
+
+      fireClick(q('.pk-hamburger-btn'));
+      fireClick(q('.pk-menu-settings'));
+      expect(q('.pk-auto-load-toggle').checked).toBe(false);
+    });
+
+    it('REGRESSION: when paused, Close does not apply state to the real page', async () => {
+      localStorage.setItem('prefkeeper-settings', JSON.stringify({ autoLoadPaused: true }));
+
+      await initPrefKeeper();
+      // Even the initial mount-time apply should be skipped while paused
+      expect(document.documentElement.style.getPropertyValue('--pk-background')).toBe('');
+
+      fireClick(q('.pk-close-btn'));
+      await flushPromises();
+      expect(document.documentElement.style.getPropertyValue('--pk-background')).toBe('');
+    });
   });
 });

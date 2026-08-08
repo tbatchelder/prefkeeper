@@ -1,5 +1,14 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { get, set, clear, exportState, importState, isValidState } from '../src/storage/index.js';
+import {
+  get,
+  set,
+  clear,
+  exportState,
+  importState,
+  isValidState,
+  getSettings,
+  setSettings
+} from '../src/storage/index.js';
 import { getDefaultState } from '../src/core/tokens.js';
 
 /**
@@ -143,5 +152,29 @@ describe('exportState / importState', () => {
     const json = exportState(getDefaultState());
     importState(json);
     expect(localStorage.getItem('prefkeeper-preferences')).toBeNull();
+  });
+});
+
+describe('getSettings / setSettings', () => {
+  it('returns defaults (autoLoadPaused: false) when nothing has been saved', async () => {
+    const settings = await getSettings();
+    expect(settings).toEqual({ autoLoadPaused: false });
+  });
+
+  it('returns defaults when saved settings data is corrupted JSON', async () => {
+    localStorage.setItem('prefkeeper-settings', '{not valid json');
+    const settings = await getSettings();
+    expect(settings).toEqual({ autoLoadPaused: false });
+  });
+
+  it('persists a valid settings value so a later getSettings() returns it', async () => {
+    await setSettings({ autoLoadPaused: true });
+    const settings = await getSettings();
+    expect(settings.autoLoadPaused).toBe(true);
+  });
+
+  it('throws rather than saving an invalid settings shape', async () => {
+    await expect(setSettings({ autoLoadPaused: 'yes' })).rejects.toThrow();
+    await expect(setSettings(null)).rejects.toThrow();
   });
 });

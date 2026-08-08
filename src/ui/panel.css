@@ -172,21 +172,61 @@
 
 /* SETTINGS PANEL */
 
-.pk-settings-panel {
+.pk-hamburger-screen {
   position: absolute;
-  top: 56px;
-  right: 12px;
+  inset: 0;
   background: white;
-  border: 1px solid #bbb;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  z-index: 20;
-  padding: 1rem;
-  min-width: 280px;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
 }
 
-.pk-settings-panel h3 {
+.pk-hamburger-screen-header {
+  padding: 1rem;
+  border-bottom: 1px solid #ddd;
+}
+
+.pk-hamburger-back-btn {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 1rem;
+  font-family: inherit;
+  padding: 0.5rem 0;
+}
+
+.pk-hamburger-screen-content {
+  flex: 1;
+  overflow: auto;
+  padding: 1rem;
+}
+
+.pk-overlay-body h3 {
   margin-top: 0;
+}
+
+.pk-overlay-body textarea {
+  width: 100%;
+  font-family: monospace;
+  font-size: 0.85rem;
+  padding: 0.5rem;
+  box-sizing: border-box;
+}
+
+.pk-export-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.pk-import-error {
+  color: #a33333;
+  font-weight: bold;
+}
+
+.pk-settings-hint {
+  font-size: 0.85rem;
+  color: #555;
 }
 
 .pk-settings-row {

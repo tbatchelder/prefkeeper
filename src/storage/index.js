@@ -104,6 +104,35 @@ export async function clear() {
 }
 
 /**
+ * Settings default: auto-load is on (preferences apply automatically)
+ * unless the user has explicitly paused it.
+ */
+function getDefaultSettings() {
+  return { autoLoadPaused: false };
+}
+
+function isValidSettings(settings) {
+  return !!settings && typeof settings === 'object' && typeof settings.autoLoadPaused === 'boolean';
+}
+
+/**
+ * Returns saved settings, or defaults if nothing saved / corrupted —
+ * same fail-safe pattern as get() above.
+ */
+export async function getSettings() {
+  const saved = await activeAdapter.getSettings();
+  if (saved && isValidSettings(saved)) return saved;
+  return getDefaultSettings();
+}
+
+export async function setSettings(settings) {
+  if (!isValidSettings(settings)) {
+    throw new Error('Refusing to save: settings do not match the expected shape.');
+  }
+  await activeAdapter.setSettings(settings);
+}
+
+/**
  * Turns a state object into a JSON string for the Export panel to
  * display/copy. Pure — does not touch storage.
  */

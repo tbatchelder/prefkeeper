@@ -1,8 +1,6 @@
-// src/storage/localStorageAdaper.js
-
-// default adapter, used today
-
 /**
+ * localStorageAdapter.js
+ *
  * The only adapter that exists today. Wraps the browser's localStorage
  * under a single fixed key. Every method is declared async even though
  * localStorage itself is synchronous — this matches the shape
@@ -18,6 +16,7 @@
  */
 
 const STORAGE_KEY = 'prefkeeper-preferences';
+const SETTINGS_KEY = 'prefkeeper-settings';
 
 export async function get() {
   try {
@@ -38,4 +37,24 @@ export async function set(state) {
 
 export async function clear() {
   localStorage.removeItem(STORAGE_KEY);
+}
+
+// Settings are stored under a SEPARATE key from preferences —
+// autoLoadPaused is app config, not user preference data. Per the
+// earlier extension-architecture decision, this is also where a
+// future extension adapter would own the real decision (the page
+// only ever asks; it doesn't unilaterally decide) — for now, without
+// an extension, this localStorage key is the only source of truth.
+export async function getSettings() {
+  try {
+    const raw = localStorage.getItem(SETTINGS_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+}
+
+export async function setSettings(settings) {
+  localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
 }
