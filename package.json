@@ -19,6 +19,7 @@
   ],
   "scripts": {
     "build": "tsup",
+    "prepublishOnly": "npm run build",
     "postbuild": "node scripts/copy-assets.mjs",
     "dev": "tsup --watch",
     "test": "vitest run",
@@ -41,6 +42,9 @@
     "prettier": "^3.3.3",
     "tsup": "^8.5.1",
     "vitest": "^2.1.9"
+  },
+  "allowScripts": {
+    "esbuild@0.27.7": true
   },
   "directories": {
     "doc": "docs",
