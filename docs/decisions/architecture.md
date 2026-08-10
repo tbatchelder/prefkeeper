@@ -1,81 +1,267 @@
 # PrefKeeper — Architecture Decisions
 
-A running log of decisions made during design/prototyping, and why. Add new entries at the bottom as decisions get made or revisited.
+A running log of decisions made during design/development, and why.
+Add new entries at the bottom as decisions get made or revisited.
 
----
-
-## Naming
-
-- **Chosen name: PrefKeeper.** Ties into the "Keeper" naming pattern already used for CorpKeeper — consistent personal brand across projects.
-- Ruled out: `OpenA11Y` (trademark/W3C conflict risk), `a11ytheme` (existing old repo), `MyTheme` (taken on npm), `MyA11y` (working placeholder only, never final).
-- Confirmed available at time of check: npm registry name `prefkeeper` was open.
+Naming rationale has moved to [`naming.md`](./naming.md); the
+in-scope/out-of-scope boundary has moved to [`../SCOPE.md`](../SCOPE.md).
 
 ---
 
 ## Core architecture
 
-- **Storage adapter pattern.** All reads/writes go through a generic interface (`get()`, `set()`, `export()`, `import()`) defined once in `src/storage/index.js`. `localStorageAdapter.js` is the only implementation today. This is the seam that lets a future browser extension (`extensionAdapter.js`, using `chrome.storage`) swap in later without touching `engine.js` or `panel.js`.
-- **One JSON blob, not per-category storage.** All preferences (Colors, Text, Motion, Focus) live in a single saved object. This is why the dirty-state UI is shared across tabs (see below) rather than per-tab independent state.
-- **CSS custom property convention: `--a11y-*` namespace.** PrefKeeper never touches a developer's existing `:root` variables. Developers opt in by referencing PrefKeeper's namespaced variables in their own CSS (or, for Tailwind users, by mapping their `@theme` tokens to reference `--a11y-*` values). This avoids all `:root` collision risk at the cost of requiring explicit developer adoption — decided as the right tradeoff over a mapping/adapter layer (deferred, see Follow-ups) or Shadow DOM encapsulation (rejected — doesn't fit "restyle the whole page" model).
-- **Tailwind v4 compatibility note:** Tailwind v4 generates real CSS custom properties from `@theme` by default, which makes wiring Tailwind sites to PrefKeeper's tokens more straightforward than under Tailwind v3's JS-config model. Still requires the developer to actively map their theme vars to `--a11y-*` — not automatic.
-- **Zero runtime dependencies.** Icons are inline SVG (Lucide-style paths, MIT licensed), not a CDN icon font or JS library — avoids CSP breakage, offline failure, and network dependency for something meant to be a lightweight drop-in.
+- **Storage adapter pattern.** All reads/writes go through a generic
+  interface (`get()`, `set()`, `clear()`, `getSettings()`,
+  `setSettings()`, plus the pure `exportState()`/`importState()`
+  helpers) defined once in `src/storage/index.js`.
+  `localStorageAdapter.js` is the only real implementation today;
+  `extensionAdapter.js` is a stub throwing "not implemented" — the seam
+  for the future browser extension to swap in without touching
+  `engine.js` or `panel.js`.
+- **Preferences and settings are separate storage keys.**
+  `prefkeeper-preferences` holds the four editable categories (colors/
+  text/motion/focus). `prefkeeper-settings` holds app config
+  (`autoLoadPaused`) — conceptually different data with a different
+  lifecycle, not user-editable preference values.
+- **One JSON blob per category set, not per-field storage.** All
+  preferences live in a single saved object. This is why the dirty-state
+  UI is shared across tabs (see below) rather than four independent
+  states.
+- **CSS custom property convention: `--pk-*` namespace.** PrefKeeper
+  never touches a developer's existing `:root` variables. Developers
+  opt in by referencing PrefKeeper's namespaced variables in their own
+  CSS. See [`naming.md`](./naming.md) for why `--pk-` over the
+  originally-planned `--a11y-`.
+- **Zero runtime dependencies.** Icons are inline SVG, not a CDN icon
+  font or JS library. The bundled font ships inside the package itself,
+  not loaded from a CDN. Both choices avoid CSP breakage, offline
+  failure, and network dependency for something meant to be a
+  lightweight drop-in.
 
-## Scope boundary (what PrefKeeper does and does not do)
+## UI architecture: engine + components
 
-- **In scope:** Color (text, background, links, buttons, button text, focus rings), Text (size, line-height, letter-spacing, word-spacing, font-family swap), Motion (reduced-motion toggle), Focus (outline color/width).
-- **Explicitly out of scope:** Semantic HTML, alt text, ARIA roles/labels, keyboard navigation. These require the developer to write correct markup — no CSS-variable trick can retrofit them.
-- **Why this boundary matters beyond scope creep:** the accessibility-overlay industry (UserWay, accessiBe, EqualWeb, etc.) drew heavy, sustained criticism from disabled users and accessibility advocates for claiming automated widgets could "fix" missing alt text or bad ARIA — often making pages worse for screen reader users while marketing as compliance solutions. PrefKeeper's positioning is deliberately the opposite: "changes how your site looks, not what it says." This should be stated explicitly in public docs, not just held as an internal principle.
-- Image/gradient color adjustment and embedded text-in-images are out of scope; anyone wanting that would need to build and fund it separately.
+`panel.js` is the state/wiring "engine" — it owns `state`, dirty-state
+tracking, and every event listener. It does not contain the actual
+HTML/UI templates for the Colors/Text/Motion/Focus tabs or the
+Import/Export/Help/Settings screens; those live as small template
+functions in `src/ui/components/`, one file per screen, each exporting
+a `buildXScreen()` function that returns an HTML string. This keeps
+`panel.js` from becoming an ever-growing wall of inline template
+literals as more screens/presets get added.
 
-## UI/UX decisions
+`src/utils/dom.js` holds only genuinely generic, content-agnostic DOM
+helpers (currently just `el()`, which parses an HTML string into a
+real detached element) — it is deliberately NOT a dumping ground for
+actual UI screens.
 
-- **Header/navigation:** No "Home" tab (wasn't doing anything). No "Theme" wording (PrefKeeper doesn't store "themes," it stores preferences). Tabs are the category list itself: `Colors | Text | Motion | Focus`, with room to add more categories later.
-- **Import/Export/Help/Close** live as icon buttons in the top-right, separate from the footer's Save/Reset actions — data operations vs. editing actions are treated as different classes of action.
-- **Import/Export UI will NOT be a modal.** Since this must be mobile-ready, the plan is to swap the Preview/Controls area out for a full import/export view (paste/copy JSON, Copy All button) rather than use a fixed-position overlay, which fights viewport sizing on mobile.
-- **Security requirement (from bootcamp security class):** any pasted import content MUST be strictly sanitized/validated as the expected JSON shape before use. Anything that doesn't match is discarded. Not yet implemented — flagged as a hard requirement, not a nice-to-have.
-- **Presets are dropdowns, not buttons.** Buttons scale their footprint with option count (overflow risk on narrow screens); a dropdown's footprint stays constant. Split into two dropdowns: Contrast/Mode (High Contrast, Low Contrast, Dark Mode, Light Mode) and Color Vision (four types).
-- **Color-blindness naming uses plain language first, clinical term in parentheses** — e.g. "Red-green, most common (Deuteranopia)" — since most users won't recall the Greek terms. Ordered by real-world prevalence (deuteranopia and protanopia, both "red-green," are most common; tritanopia and achromatopsia are rarer).
-- **Calculations (contrast ratio badge)** pinned to the bottom of the Controls panel via `flex: 1` on the sliders container above it.
-- **Save / Reset / Restore Site Default have distinct, deliberately different semantics:**
-  - **Save** — writes current working values to storage. Does not touch the live website. The only fully deliberate, explicit "commit" action.
-  - **Reset [Category]** — reverts the app's working values back to defaults. Does not save, does not touch the live site. Counts as an unsaved (dirty) state, same as any other edit.
-  - **Restore Site Default** — requires a confirm dialog first. If confirmed, wipes all saved storage, reverting the live site (on next close) to the designer's original look. Counts as an immediately-persisted action, not a pending change.
-- **Dirty-state model is shared across all four tabs, since it's one JSON.** A `Set` of dirty categories (`colors`, `text`, `motion`, `focus`) drives one shared message rendered identically in all four tabs' status blocks — e.g. "Color and Motion changes not saved" — rather than four independent per-tab states.
-- **Close behavior:** clicking Close checks the dirty-category set.
-  - If dirty: show a confirm dialog worded as **"You have unsaved changes. [Cancel] [Save and Close]"** — deliberately avoiding ambiguous Yes/No phrasing, since the wording itself should make the outcome obvious without relying on a visual nudge.
-  - If not dirty: closes immediately.
-  - **Only Close applies stored values to the live website** (reads from storage, sets the real page's `--a11y-*` variables). Save only persists to storage; it does not touch the live page. Slider/control changes only ever affect the internal `.preview` mock, never the live site directly.
-- **No animated nudges toward Save or any other action.** A pulsing arrow or similar motion-based visual cue would be undermined by PrefKeeper's own reduced-motion feature — the very users most likely to need extra guidance could have that guidance suppressed by their own settings. Clear, unambiguous wording is the chosen alternative to any nudge mechanism.
-- **Focus preview shows the outline only on genuine `:focus`** (not a permanently-visible fake state), to test the real mechanism. Flagged as worth revisiting after real-world testing, since a developer's own focus-related transitions/animations may interact with this in ways not yet observed.
+## Hamburger menu: full overlay, not disable/hide
+
+Import, Export, Help, and Settings render as a single overlay screen
+that covers the **entire app, tabs included** — not just the
+Preview/Controls area (an earlier plan). Reaching one of these screens
+hides everything else behind it; a "← Back" button returns to normal
+tab view without touching any tab's underlying state at all (nothing
+was ever removed or changed, so there's nothing to restore).
+
+This was chosen over disabling or hiding the tabs/Save/Reset/View-
+Default buttons individually while a hamburger screen is open. That
+approach would need real state tracking across seven separate controls
+to get right, and a half-disabled background is exactly the kind of
+thing that trips up keyboard/screen-reader users — a bad look for an
+accessibility tool specifically. A full overlay makes the bad state
+impossible to reach at all, rather than requiring careful prevention
+every time.
+
+The backdrop (behind the whole app, dimming the host page) is
+deliberately **not** wired to close anything on click — only the X
+button closes the app, with its unsaved-changes check intact. An
+accidental click just outside the panel while mid-edit should never be
+able to silently discard someone's changes.
+
+## Save / Reset / View Site Default / Clear All — four distinct actions
+
+- **Save** — writes current working values to storage. Does not touch
+  the live website. The only fully deliberate, explicit "commit" action.
+- **Reset [Category]** — reverts the _active tab's_ working values back
+  to defaults. Does not save, does not touch the live site. Counts as
+  an unsaved (dirty) state, same as any other edit.
+- **View Site Default** (footer toggle) — a temporary, non-destructive,
+  view-only flip of the panel's own internal preview between "my
+  preferences" and "the site's original look." Never touches storage or
+  the real host page at all; resets itself automatically on refresh
+  since nothing was ever persisted.
+- **Clear All Saved Preferences** (hamburger, confirm-gated) — the
+  actual destructive action. Wipes storage entirely, resets every tab
+  to defaults. Counts as immediately persisted, not a pending change.
+  Does NOT touch the real host page yet — like Save, that only happens
+  at Close.
+
+## Dirty-state model
+
+A `Set` of dirty categories (`colors`, `text`, `motion`, `focus`) drives
+one shared status message rendered identically across all four tabs'
+status blocks — e.g. "Color and Motion changes not saved" — rather than
+four independent per-tab states. The initial paint explicitly syncs
+this to "Saved" on mount (a fresh load with nothing edited should never
+show a false "unsaved changes" warning, which the template's hardcoded
+placeholder text did before this was caught in testing).
+
+## Close behavior, and the ONLY two places the real host page is touched
+
+Clicking Close checks the dirty-category set:
+
+- If dirty: shows a confirm dialog worded as **"You have unsaved
+  changes. [Cancel] [Save and Close]"** — deliberately avoiding
+  ambiguous Yes/No phrasing.
+- If not dirty: closes immediately.
+
+**Only Close, and the initial mount, ever apply state to the real host
+page** (`document.documentElement`) — both gated on `autoLoadPaused`
+(see Settings/Pause below). Slider/preset/import changes only ever
+affect the internal preview elements, never the live site directly,
+until one of those two moments.
+
+## Settings and Pause (shared boolean)
+
+The Settings screen's "Auto-load my preferences on every page" checkbox
+and the hamburger's "Pause Auto-Load" shortcut read/write the **same**
+persisted value (`autoLoadPaused`, in `prefkeeper-settings`). Pause
+exists as a one-tap shortcut to the same setting, for showing the site
+to someone else without preferences applied, without navigating into
+Settings first.
+
+When paused, both the initial mount-time apply and Close's apply are
+skipped — Close shouldn't quietly reapply preferences mid-demo just
+because someone happened to close the panel while paused, which would
+defeat the entire point of pausing.
+
+Without the browser extension, this only meaningfully controls
+same-origin auto-apply-on-load. True cross-tab/cross-device pause
+behavior depends on the extension existing (see the extension design
+notes) — a known, accepted v1 limitation, not an oversight.
+
+## Import / Export
+
+- **Import** loads parsed data into the working `state` object and
+  marks all four categories dirty — the same "not saved until you hit
+  Save" discipline as any other edit, no separate save path. If there
+  are already unsaved changes, it warns and asks for confirmation
+  before overwriting, via the same confirm pathway as Close.
+- Validation reuses `storage.importState()` — the same shape-validation
+  every path into storage goes through, not a separate ad hoc parser.
+  Invalid JSON shows an inline error in the Import screen rather than a
+  disruptive `alert()`.
+- **Export** provides both a "Copy All" button (clipboard) and a real
+  file download (Blob + temporary `<a download>`), no confirmation
+  popup after either — the browser's own download indicator already
+  covers that.
+- **Security note (verified, not just assumed):** JSON.parse is not
+  vulnerable to prototype pollution via a `"__proto__"` key — this is
+  spec-defined behavior (JSON.parse builds objects via
+  CreateDataProperty, not normal assignment, so a `"__proto__"` key in
+  parsed JSON becomes an ordinary own property, never the real
+  prototype). Verified empirically, not just asserted. Independently,
+  PrefKeeper's own Import handler only ever reads four specific named
+  properties from the parsed object (`colors`/`text`/`motion`/`focus`)
+  — never a generic merge — so even in a hypothetical unsafe-JSON.parse
+  world, nothing in this codebase would be exposed. Worth revisiting if
+  a future feature ever does a _recursive/deep_ merge of imported data
+  (the real historical source of prototype-pollution CVEs, e.g. older
+  `lodash.merge`/`$.extend(true, ...)`), which nothing here does today.
+
+## Custom presets (public extension point)
+
+`initPrefKeeper({ customPresets: { contrast: {...}, colorVision: {...} } })`
+merges caller-supplied presets with the built-in defaults from
+`src/presets/`. A custom key matching a built-in name overrides it; any
+other key is added alongside. This is what lets a company (or any
+developer) layer in their own private preset — never published in this
+open-source package, never requiring a fork — and have it show up as a
+real, labeled, selectable dropdown option, generated from the preset's
+own `label` field rather than hardcoded HTML.
 
 ## Typography
 
-- **Atkinson Hyperlegible** chosen as the featured "accessible font" option (over OpenDyslexic and the initial Comic Sans placeholder). SIL Open Font License — free for commercial/open-source use, no attribution required.
-- **Text panel offers a live side-by-side comparison** (site font vs. Atkinson Hyperlegible) via radio buttons showing real rendered sample text, rather than a checkbox asking the user to trust a label like "dyslexia-friendly font."
-- **Must be bundled into the npm package itself**, not loaded from a CDN — no CDN dependency, no extra install step for the developer, works offline for the end user. The `.woff2` file lives in package assets; the build copies it into `dist/`; `panel.js` injects a `@font-face` rule pointing at the bundled path at runtime.
-- **PrefKeeper's own panel UI will also use Atkinson Hyperlegible** as its chrome font, once self-hosted — "eating your own dog food" as an accessibility tool.
-- Decision to keep the font choice to exactly two options (site font vs. Atkinson) for now, deferring a curated multi-font list until real user feedback indicates it's wanted.
+- **Atkinson Hyperlegible Next** — see [`naming.md`](./naming.md) for
+  why this specific family. All 14 weight/style combinations are
+  bundled (~380KB total) so a developer adopting it as their site's
+  whole type system has the full range, not just what PrefKeeper's own
+  chrome happens to use.
+- Bundled inside the package itself (`src/assets/fonts/`, copied to a
+  top-level `assets/` folder at build time, sibling to `dist/`) — no
+  CDN dependency. `fonts.js` resolves the font file URLs at runtime via
+  `document.currentScript.src` (for plain `<script>` tag / IIFE usage)
+  falling back to `import.meta.url` (for real ESM bundler consumption).
+  This was arrived at after discovering esbuild does NOT natively
+  support the `new URL(path, import.meta.url)` asset-copying pattern
+  the way Vite does — that's an open esbuild feature request, not
+  shipped behavior, confirmed by testing directly.
+- The Text tab offers a live side-by-side comparison (site font vs.
+  Atkinson Hyperlegible Next) via radio buttons showing real rendered
+  sample text, rather than a checkbox asking the user to trust a label.
+- PrefKeeper's own panel chrome also uses Atkinson Hyperlegible Next —
+  "eating your own dog food" as an accessibility tool.
+- Font choice stays at exactly two options (site font vs. Atkinson) for
+  now; a curated multi-font list is deferred until real user feedback
+  indicates it's wanted.
 
 ## Technical implementation notes
 
-- **Vertical range sliders** required abandoning `-webkit-appearance: slider-vertical` (non-standard, causes Chrome to paint a native `accent-color` fill over any custom track background) in favor of `writing-mode: vertical-lr` + `direction: rtl` + `appearance: none` with fully custom `::-webkit-slider-runnable-track` / `::-webkit-slider-thumb` (and Moz equivalents).
-- **Live-updating gradients and thumb colors** use CSS custom properties (`--thumb-color`, `--track-bg`) set via JS on the `<input>` element itself — these inherit into the element's own pseudo-elements the same way they'd inherit into child elements, which is what makes the thumb-matches-current-hue effect work.
-- **Known caveat, not yet tested:** cross-browser behavior of this vertical-slider technique in Firefox and Safari hasn't been verified — only tested in a Chromium-based environment so far.
-- **Prototype-to-production expectation:** most of the CodePen HTML will not survive the transition to the real package — it'll be rebuilt as JS-constructed DOM (`document.createElement()` / template strings) inside `panel.js`, since PrefKeeper has no page of its own to own HTML in. The CSS carries over largely as-is (with namespaced selectors). The prototype's job was proving the slider/pseudo-element mechanism worked before committing it to real architecture — that job is done.
+- **Vertical range sliders** use `writing-mode: vertical-lr` +
+  `direction: rtl` + `appearance: none` with fully custom
+  `::-webkit-slider-runnable-track` / `::-webkit-slider-thumb` (and Moz
+  equivalents), rather than the non-standard
+  `-webkit-appearance: slider-vertical` (which paints a native
+  `accent-color` fill over any custom track background). Sliders grow
+  to fill whatever height is actually available (`flex: 1`, sane
+  min/max floor and ceiling) rather than a fixed `vh`/`px` formula —
+  this also fixed a real bug where `align-items: flex-start` was
+  silently preventing slider groups from stretching to fill their row.
+- **Cross-tab live preview:** every tab's preview reflects the full
+  combined working state (all four categories), not just its own
+  category — if someone changes colors because they couldn't read the
+  default scheme, every other tab needs to be readable too, not just
+  the one they're currently on.
+- **Known caveat, not yet tested:** cross-browser behavior of the
+  vertical-slider technique in Firefox and Safari — only verified in a
+  Chromium-based environment so far.
+
+## Publishing / packaging
+
+- **`prepublishOnly: npm run build`** guarantees a real `npm publish`
+  always ships a freshly-built `dist/`/`assets/`, never a stale build
+  from an earlier session. Verified by deliberately corrupting a build
+  output file and confirming the dry-run publish silently rebuilt it
+  clean first.
+- **`allowScripts` pre-approval for esbuild** (pinned to its exact
+  resolved version) added proactively ahead of npm v12's new
+  install-time security defaults, which make dependency
+  install/postinstall scripts opt-in rather than automatic. This
+  protects future contributors' `npm install` from silently skipping
+  esbuild's platform-binary fetch — it does NOT affect anyone who later
+  runs `npm install prefkeeper` themselves, since the published package
+  has zero runtime dependencies and no install script of its own.
+  Version-pinned by design: re-approval is needed whenever esbuild's
+  resolved version changes.
 
 ---
 
-## Open follow-ups for next session
+## Open items (current, not historical)
 
-- [ ] Build the Import/Export panel: full Preview/Controls-area swap (not modal), paste-in field, Copy All button, and **strict JSON sanitization/validation** of any pasted content before use (reject and discard anything that doesn't match the expected shape).
-- [ ] Decide whether tabs need a visual indicator (e.g. a dot) showing which specific tab(s) have unsaved changes, beyond the shared status-block wording.
-- [ ] Finalize exact confirm-dialog copy for Restore Site Default (the "this will erase your saved preferences..." wording was drafted but not final).
-- [ ] Bundle Atkinson Hyperlegible `.woff2` into package assets and wire up the build step to copy it into `dist/`.
-- [ ] Apply Atkinson Hyperlegible as PrefKeeper's own panel chrome font once self-hosted.
-- [ ] Test the vertical range slider technique in Firefox and Safari.
-- [ ] Revisit the Focus tab's "only show outline on real `:focus`" decision after some real testing/developer feedback.
-- [ ] Write `docs/SCOPE.md` capturing the in-scope/out-of-scope boundary explicitly, including the overlay-industry rationale, so future contributors (and Tim's own future self) have it in writing.
-- [ ] Write `docs/decisions/naming.md` with the naming rationale and alternatives considered (can mostly be pulled from this doc).
-- [ ] Begin porting the CodePen prototype into the real repo structure (`src/core/engine.js`, `src/storage/localStorageAdapter.js`, `src/storage/extensionAdapter.js` stub, `src/ui/panel.js`, `src/presets/`).
-- [ ] Formalize the storage-adapter interface in code (currently only conceptual/`localStorage`-direct in the prototype).
-- [ ] Gather feedback from tomorrow's coach Q&A and the general Q&A meeting; fold any resulting changes back into this document.
+- [ ] Cross-browser testing of the vertical-slider technique in
+      Firefox and Safari.
+- [ ] Revisit the Focus tab's "only show outline on real `:focus`"
+      decision after more real-world testing/feedback.
+- [ ] Whether tabs need a visual indicator (e.g. a dot) showing which
+      specific tab(s) have unsaved changes, beyond the shared
+      status-block wording — never decided either way.
+- [ ] `docs/ARCHITECTURE.md` (a contributor-facing map of the codebase,
+      distinct from this decisions log) is still an empty placeholder.
+- [ ] `docs/ROADMAP.md` needs a rewrite — it currently holds an old,
+      fully-completed porting plan rather than actual future items.
+- [ ] Success/Warning/secondary-button/input color targets — deferred
+      to v1.5/v2, would need their own dedicated tokens (not a reuse of
+      Background/Text/Buttons/Links).
+- [ ] React wrapper and the browser extension are both real, planned,
+      and entirely unstarted — separate future projects, not part of
+      the v1 core module.
