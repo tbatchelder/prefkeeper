@@ -1,0 +1,31 @@
+node:fs is pulling directly from Node using the Node filesystem APi.  These are synch functions which block others until complete - great for when making files and folders.
+
+existsSync checks whether a file or directory exists. It’s a simple boolean gatekeeper.
+
+mkdirSync creates a directory. If you’re preparing a theme folder or ensuring PrefKeeper has a place to write output, this is the function doing that work.
+
+copyFileSync duplicates a file byte‑for‑byte. Useful for shipping default theme assets or copying template files into a user’s config directory.
+
+writeFileSync writes text or binary data to disk. This is how your script produces actual theme files, JSON configs, or a11y metadata.
+
+readdirSync reads the contents of a directory and gives you an array of filenames. Perfect for scanning theme folders or enumerating available presets.
+
+###############################################################################################
+
+__dirname doesn't exist in ES modules there we have to use
+
+fileURLToPath converts a module’s URL (like file:///Users/{name}/project/src/index.js) into a real filesystem path (/Users/{name}/project/src/index.js).
+
+dirname extracts the directory portion of that path.
+
+join lets you build new paths relative to that directory.
+  '..' tells it to go up a directory from __dirname
+
+###############################################################################################
+
+The 'import.meta.url' is the module's location as a url, not a path.  So we need to convert it to a path.
+
+###############################################################################################
+process is a global object in Node.js.  Kind of like "Window" in the browser.
+
+cwd = current working directory

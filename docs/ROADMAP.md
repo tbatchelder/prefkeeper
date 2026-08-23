@@ -1,37 +1,58 @@
-now, some v2 things to think about.
+# PrefKeeper — Roadmap
 
-Allowing devs to import or register a theme of their own which we'll add to the import function panel when it opens - either import a text tile or import a pre-registered theme.
+Status board, not a decision log — see
+[`decisions/architecture.md`](./decisions/architecture.md) for the
+_why_ behind anything here.
 
-Add on more items for color changes
+## v1 — done
 
-Possibly a panel to allow someone to type in HSL values instead if they want that option; same for some of the other values too I think. Kind of like a "normal" vs "professional" flipper button for Controls.
+Colors, Text, Motion, Focus tabs; presets (with a `customPresets`
+extension point); Import/Export; Settings/Pause; Save/Reset/View Site
+Default/Clear All; bundled font; full test suite (jsdom + Node,
+Vitest); npm packaging verified via dry-run publish;
+`prepublishOnly` + `allowScripts` safety nets in place.
 
-Possibly a means to save multiple preferences for different users using the same device and therefore the ability to import the one you need.
+## Immediate next steps
 
-Some things to consider for when we build this out of CodePen:
+- [ ] Decide public-repo timing (currently private) — your call, not a
+      technical blocker.
+- [ ] Real `npm publish` once ready (name confirmed available, dry-run
+      already clean).
+- [ ] Cross-browser check (Firefox, Safari) — the vertical-slider CSS
+      technique has only been confirmed in Chromium so far.
+- [ ] Playwright e2e tests — the jsdom test suite verifies _behavior_,
+      not _visual layout_; nothing automated currently protects the
+      flexbox/slider-height/overlay-centering work from regressing.
 
-Export which need a panel which gives the user all of the JSON so they can copy and paste it somewhere.
+## v1.x / v2 ideas (not yet built)
 
-Import will need full sanitization and security checks from the input field to ensure not only is it legal JSON but not malicious either.
+- **User-registerable themes.** Different from the existing
+  `customPresets` option (which a _developer_ configures in code at
+  `initPrefKeeper()` time) — this would let an _end user_ import/name
+  their own theme through the Import panel itself, so it shows up as a
+  real dropdown option, not just applied once.
+- **More color targets.** Success/Warning messages, secondary buttons,
+  and inputs currently don't respond to color changes at all — they'd
+  need their own dedicated tokens (not a reuse of Background/Text/
+  Buttons/Links, since a success message shouldn't literally become
+  "whatever background color the user picked").
+- **Typed/numeric value entry.** HSL fields you can type an exact
+  number into, as an alternative to the sliders — something like a
+  "Normal vs. Professional" mode toggle for the Controls panel. Whatever
+  writes these values needs the same clamping discipline the sliders
+  get for free from their `min`/`max` attributes — see the note in
+  `panel.js`'s color-slider handler.
+- **Multiple saved profiles per device.** The biggest architectural
+  lift of this list — today's storage model is one preference blob per
+  key; this would need a named-collection shape plus a concept of which
+  profile is currently active, touching Save, Import/Export, and the
+  eventual extension's auto-load logic all at once.
 
-Sorry to hear about the coach — hopefully it's the family situation resolving rather than something more permanent, but either way that's out of your hands. Good that the other coach's reaction leaned toward "how do we ship this," though — that's actually a more useful signal than pure enthusiasm.
+## v2 / v3 — separate future projects
 
-Given everything already proven in CodePen, here's the porting order I'd follow — sequenced so Vitest has something to test almost immediately, and the riskiest/most CodePen-specific part (the DOM-building UI) comes last, once everything underneath it is solid:
-
-**Phase 1 — headless logic (no DOM, fully unit-testable):**
-
-1. `src/core/tokens.js` — canonical `--a11y-*` variable names + your existing `colorDefaults`/text/motion/focus defaults, ported straight from the prototype's JS objects.
-2. `src/core/contrast.js` — your `luminance()` / `contrastRatio()` functions, unchanged logic, just relocated.
-3. `src/storage/index.js` + `localStorageAdapter.js` — formalizes `saveToStorage()` into the real `get()`/`set()`/`export()`/`import()` interface from the original architecture doc.
-4. `src/core/engine.js` — the generalized version of `applyColorTargetToPreview()`, except instead of writing inline styles onto a `.preview` div, it writes real `document.documentElement.style.setProperty('--a11y-*', ...)` calls onto the actual host page.
-5. First Vitest tests, against #1–#4 only — this is genuinely valuable this early, since none of it needs a browser or DOM to verify.
-
-**Phase 2 — presets:** 6. `src/presets/colors.js`, `text.js`, `motion.js`, `focus.js` — your `contrastPresets`/`colorVisionPresets` objects and whatever text/motion/focus defaults exist, extracted out of the CodePen inline code into their own files, each just exporting data + maybe a small apply helper.
-
-**Phase 3 — the UI (built last, most CodePen-transferable, but needs care in translation):** 7. `src/ui/panel.js` — this is where the CodePen HTML becomes `document.createElement()`/template-string DOM construction, and all your existing behavior — tab switching, dirty-state tracking, hamburger menu, Save/Reset/Restore/Close, the View Site Default toggle — gets rewired to call into `engine.js`/`storage`/`presets` instead of touching `.preview` directly. 8. `src/ui/panel.css` — largely a copy-paste of what you already have, just namespaced (`.prefkeeper-*` instead of `.mya11y-*`) so it can't collide with a host page's existing classes. 9. `examples/vanilla/index.html` — a bare test page that calls `initPrefKeeper()`, becomes your new "click around and see it work" environment, replacing CodePen.
-
-**Phase 4 — proving it, packaging it:** 10. `test/e2e/` — Playwright tests against `examples/vanilla/index.html`, confirming the real DOM/CSS-variable behavior end-to-end, not just the logic in isolation. 11. CI workflow + issue templates — you've got the shapes already sketched from the earlier scaffold conversation; just needs to actually get committed. 12. `docs/SCOPE.md` and the naming doc — already drafted in spirit from tonight's `DECISIONS.md`; worth formalizing into their own files once the code's real, so contributors hit them before the code.
-
-**Where I'd start right now, given you asked "what's the plan":** Phase 1, item 1 — `tokens.js`. It's the smallest, most foundational file, everything else in Phase 1 references it, and it's a direct, low-risk port of things you've already fully designed and tested in the prototype.
-
-Want me to write `tokens.js` now, pulling directly from your CodePen's `colorDefaults` plus the text/motion/focus default values, so you've got the first real source file in the actual repo?
+- **React wrapper.** Not started; no architecture decisions made yet
+  (hook vs. component vs. both).
+- **Browser extension.** The mechanism for true cross-site preference
+  persistence (today's localStorage is per-origin) — design already
+  discussed (content-script + DOM-event "mail slot" model, since a page
+  can never directly call an extension), nothing built.
