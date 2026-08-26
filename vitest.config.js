@@ -18,13 +18,15 @@ export default defineConfig({
       ['test/dom.test.js', 'jsdom']
     ],
     coverage: {
-      // scripts/copy-assets.mjs deliberately excluded: it's Node-only
-      // build tooling (never shipped to consumers), and it runs its
-      // real file-copy logic on import rather than exporting a
-      // testable function -- meaningful testing would need a refactor
-      // disproportionate to a 20-line script already verified
-      // manually across many real `npm run build` runs.
-      exclude: [...coverageConfigDefaults.exclude, 'scripts/**']
+      // Only copy-assets.mjs is excluded, NOT the whole scripts/**
+      // folder. It's a real build script (postbuild hook, runs its
+      // real logic on import, not exported for isolated testing) --
+      // already manually verified across many real `npm run build`
+      // runs. setup.mjs, also in scripts/, has genuine test coverage
+      // via test/setup.test.js's runSetup()/buildRootCss() tests and
+      // should NOT be hidden from the coverage report the way an
+      // overly broad scripts/** glob would do.
+      exclude: [...coverageConfigDefaults.exclude, 'scripts/copy-assets.mjs']
     }
   }
 });
