@@ -22,9 +22,48 @@ exactly.
 
 ```bash
 npm install prefkeeper
+npx prefkeeper-setup
 ```
 
+That second command creates a `prefkeeper/` folder in your project:
+
+```
+prefkeeper/
+├── fonts/                 (the bundled accessible font, all weights)
+├── prefkeeper-root.css     (font-face rules + editable default colors)
+└── panel.css               (PrefKeeper's own UI styling -- don't edit this one)
+```
+
+**Why a setup step, instead of everything working automatically from
+`node_modules`?** Two real reasons, not just convention:
+
+1. `node_modules` isn't guaranteed to exist wherever your site is actually
+   deployed — many static hosts (Netlify, GitHub Pages, plain FTP) don't
+   upload it at all. Files copied into your own project sidestep that.
+2. If you use a bundler (Vite, webpack), PrefKeeper's own runtime font
+   loading can't reliably guess where its files end up after your
+   bundler repackages everything — this was confirmed with a real Vite
+   production build, not assumed. Referencing the copied files directly
+   in your own CSS avoids that guesswork entirely.
+
+Re-running `npx prefkeeper-setup` later is safe: it never touches
+`fonts/` or `prefkeeper-root.css` again once they exist (so your edits
+are never lost), but it _does_ refresh `panel.css` every time, so it
+never goes stale after a `npm update prefkeeper`.
+
 ## Quick start
+
+Link all three files from your HTML — `panel.css` and
+`prefkeeper-root.css` before your own site CSS, so your own rules can
+still override anything PrefKeeper doesn't touch:
+
+```html
+<link rel="stylesheet" href="prefkeeper/panel.css" />
+<link rel="stylesheet" href="prefkeeper/prefkeeper-root.css" />
+<link rel="stylesheet" href="your-site.css" />
+```
+
+Then, anywhere in your JS:
 
 ```js
 import { initPrefKeeper } from 'prefkeeper';
@@ -38,10 +77,12 @@ That's it — calling `initPrefKeeper()` mounts the preference panel as a
 full-screen overlay, and on your visitor's next page load, PrefKeeper
 automatically re-applies whatever they last saved.
 
-### Making your site respond to it
+### Making your own site content respond to it
 
-PrefKeeper works by setting CSS custom properties on `document.documentElement`.
-Your own CSS just needs to reference them:
+PrefKeeper works by setting CSS custom properties on
+`document.documentElement`. Your own CSS just needs to reference them —
+`prefkeeper-root.css` already provides sensible defaults, so your site
+looks correct even before anyone has opened the panel:
 
 ```css
 body {
@@ -68,9 +109,6 @@ a {
   outline-style: solid;
 }
 ```
-
-The second value in each `var()` is a fallback, so your site looks
-correct even before PrefKeeper has ever run.
 
 See [`examples/vanilla/index.html`](./examples/vanilla/index.html) for a
 complete working example.
@@ -113,7 +151,7 @@ initPrefKeeper({
 
 ## Status
 
-Early (v0.x) but functional — the core preference panel, storage,
+Early (v0.8) but functional — the core preference panel, storage,
 import/export, and settings are built and tested. Not yet published to
 npm. A browser extension (for preferences to follow a visitor across
 different sites) and a React wrapper are planned, not yet built.

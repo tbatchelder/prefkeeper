@@ -24,26 +24,38 @@ src/
 │   └── index.js            # re-exports both
 ├── ui/
 │   ├── panel.js             # the "engine" — state, wiring, every event listener
-│   ├── panel.css            # all panel styling, namespaced .pk-*
-│   ├── fonts.js              # injects @font-face rules for the bundled font
+│   ├── panel.css             # all panel styling, namespaced .pk-*
+│   ├── fonts.js              # runtime @font-face injection (see Fonts below)
 │   └── components/
 │       ├── import.js, export.js, help.js, settings.js
 │       #  ^ template-only screens for the hamburger menu.
 │       #    panel.js wires the actual behavior; these just build markup.
 ├── utils/
-│   └── dom.js              # el() — the ONLY generic DOM helper. Not a
-│                            #  dumping ground for real UI screens.
+│   └── dom.js              # el() — the ONLY generic DOM helper.
 └── assets/fonts/            # bundled Atkinson Hyperlegible Next + its OFL license
 ```
 
 ```
-scripts/copy-assets.mjs   # postbuild: copies src/assets/ -> a top-level
-                           # assets/ folder (sibling to dist/, NOT inside it —
-                           # see fonts.js's own comments for why the depth matters)
-test/                      # one file per src/ file it covers, plus panel.test.js
-                           # for the UI layer (jsdom) and *.test.js for pure logic
-examples/vanilla/          # a working "real host page" — the dev sandbox,
-                           # and also proof the token system actually works
+scripts/
+├── copy-assets.mjs   # postbuild: copies src/assets/ -> a top-level assets/
+│                      #  folder AND src/ui/panel.css -> dist/panel.css.
+│                      #  Excluded from test coverage (runs real logic on
+│                      #  import, verified manually across many real builds).
+└── setup.mjs          # the `npx prefkeeper-setup` CLI a developer runs
+                        #  themselves (never an automatic install hook).
+                        #  Copies fonts + panel.css + a generated
+                        #  prefkeeper-root.css into THE DEVELOPER's OWN
+                        #  project. Structured as an exported, parameterized
+                        #  runSetup() + buildRootCss(), with a guarded entry
+                        #  point at the bottom — see test/setup.test.js and
+                        #  decisions/architecture.md for why that structure
+                        #  matters (a real symlink bug was found and fixed
+                        #  in exactly that guard).
+```
+
+```
+test/                      # one file per src/ (or scripts/) file it covers
+examples/vanilla/          # a working "real host page" dev sandbox
 ```
 
 ## The core mental model: two tracks
@@ -53,117 +65,96 @@ that get touched completely differently:
 
 - **Track 1 — internal working state.** Sliders, presets, Reset. Only
   ever touches the in-memory `state` object and the panel's own preview
-  elements (one per tab). Nothing here ever reaches the real page.
+  elements. Nothing here ever reaches the real page.
 - **Track 2 — the real host page.** Only ever touched by **Save**
   (persists `state` to storage — does NOT touch the page) and by
   **Close** and the **initial mount** (both read storage and apply it
-  to `document.documentElement` — the only two places Track 2 is ever
-  written to, both gated on the `autoLoadPaused` setting).
-
-If you're adding a new feature and find yourself wanting to touch
-`document.documentElement` from somewhere other than those two places,
-that's very likely the wrong place to do it.
+  to `document.documentElement`, gated on the `autoLoadPaused` setting).
 
 ## How a color/text/motion/focus change actually flows
 
-1. User moves a slider or picks a preset → `panel.js`'s event listener
-   updates `state` directly (e.g. `state.colors.primary = {...}`).
+1. User moves a slider or picks a preset → `panel.js` updates `state`
+   directly.
 2. `panel.js` calls `applyColors()`/`applyText()`/`applyMotion()`/
-   `applyFocus()` from `core/engine.js` against the **panel's own
-   preview element** for that tab (Track 1).
+   `applyFocus()` from `core/engine.js` against the panel's own preview
+   element for that tab (Track 1).
 3. `renderAllPreviews()` re-applies the FULL combined state to every
-   tab's preview, not just the one being edited — so switching tabs
-   never shows stale/unreadable content from before the change.
+   tab's preview, not just the one being edited.
 4. The same `engine.js` functions are used again, unchanged, when Close
-   applies the saved state to `document.documentElement` (Track 2).
-   This is the whole point of `engine.js` accepting a `target`
-   parameter — there is no separate "preview styling" code path;
-   the preview IS proof the token system works, using the exact same
-   function calls a real host page's Close event uses.
+   applies the saved state to `document.documentElement` (Track 2) —
+   there is no separate "preview styling" code path.
 
 ## The storage layer
 
-`storage/index.js` is the only file anything else should import from —
-never an adapter directly. It owns:
-
-- **`isValidState()`** — strict _shape_ validation (right fields, right
-  types). This is NOT the same as value-range clamping (a `hue` of
-  99999 would currently pass shape validation) — see
-  `decisions/architecture.md`'s Import/Export section for the current
-  state of that gap.
-- **`get()`/`set()`/`clear()`** — preferences (colors/text/motion/focus),
-  stored under `prefkeeper-preferences`.
-- **`getSettings()`/`setSettings()`** — a SEPARATE key
-  (`prefkeeper-settings`), currently just `{ autoLoadPaused }`. Kept
-  separate from preferences because it's app config, not user
-  preference data, with a different validation shape and lifecycle.
-- **`exportState()`/`importState()`** — pure functions (no side effects,
-  never call `set()` themselves). `panel.js`'s Import screen decides
-  when/whether to actually persist what comes back.
-
-Adapters (`localStorageAdapter.js`, `extensionAdapter.js`) are
-deliberately "dumb" — they only do raw get/set/clear of a value.
-Validation and JSON conversion live once, in `index.js`, and apply
-identically no matter which adapter is active.
+`storage/index.js` is the only file anything else should import from.
+It owns `isValidState()` (strict shape validation — NOT value-range
+clamping), `get()`/`set()`/`clear()` (preferences), `getSettings()`/
+`setSettings()` (a separate `prefkeeper-settings` key), and the pure
+`exportState()`/`importState()`. Adapters are deliberately "dumb" —
+just raw get/set/clear.
 
 ## Presets and the customPresets extension point
 
 `src/presets/*.js` export plain data: `{ key: { label, values } }`.
-`panel.js` imports the defaults and merges them with anything passed
-via `initPrefKeeper({ customPresets })` — a custom key with the same
-name as a built-in overrides it; anything else is added alongside.
-The dropdown `<option>` elements are generated FROM this merged data
-(via each preset's own `label`) — never hardcoded HTML — which is what
-makes a custom preset show up as a real, selectable option automatically.
+`panel.js` merges the defaults with anything passed via
+`initPrefKeeper({ customPresets })`. Dropdown `<option>` elements are
+generated FROM this data, never hardcoded HTML.
 
 ## The UI layer: engine + components
 
-`panel.js` builds its own DOM at runtime (`buildTemplate()` → a
-template-string, parsed via `utils/dom.js`'s `el()`) and inserts it
-directly into `document.body` — there's no static HTML file to put
-markup in, since PrefKeeper has no page of its own; it's dropped into
-whatever page calls `initPrefKeeper()`.
-
-The Colors/Text/Motion/Focus tabs all coexist in the DOM simultaneously
-(`hidden` toggles which is visible) — this is what makes "every tab
-shows the full combined state" work without extra plumbing. The
-Import/Export/Help/Settings screens work differently: clicking a
-hamburger item swaps `.pk-hamburger-screen-content`'s `innerHTML` to
-that screen's template and shows a single overlay covering the entire
-app (tabs included) until "← Back" is clicked. See
-`decisions/architecture.md` for why a full overlay was chosen over
-disabling/hiding controls individually.
+`panel.js` builds its own DOM at runtime and inserts it directly into
+`document.body` — there's no static HTML file, since PrefKeeper has no
+page of its own. The Colors/Text/Motion/Focus tabs coexist in the DOM
+(`hidden` toggles visibility); the hamburger screens work differently —
+a single overlay swaps its content and covers the entire app, including
+the tabs, until "← Back" is clicked.
 
 Every DOM query inside `panel.js` is scoped to the panel's own
-`container`, never `document.querySelector` directly — dropping into an
-arbitrary host page means class names/ids can't be assumed unique
-outside the panel's own subtree.
+`container`, never `document.querySelector` directly.
 
-## Fonts
+## Fonts and CSS delivery — two mechanisms, each for a different case
 
-`ui/fonts.js` injects `@font-face` rules for all 14 bundled weight/style
-combinations, resolving each file's URL via
-`document.currentScript.src` (works for a plain `<script src>` drop-in)
-falling back to `import.meta.url` (works for real ESM bundler
-consumption). The 14 URLs are written as separate static expressions,
-not built in a loop — see the file's own header comment for why that
-specific detail matters (it's not just a style choice).
+**This is more involved than it looks, and getting it wrong is easy —
+see `decisions/architecture.md` for the full story of two real bugs
+found here.** In short:
+
+1. **`ui/fonts.js`** auto-injects `@font-face` rules at runtime,
+   computing font URLs via `document.currentScript.src` (falling back
+   to `import.meta.url`). This genuinely works, but ONLY when nothing
+   repackages the code between `dist/index.js` and the browser — true
+   for a plain `<script>` tag, NOT guaranteed once a bundler (Vite,
+   webpack) is involved. Confirmed broken in that case with a real Vite
+   build before this limitation was understood.
+
+2. **`scripts/setup.mjs`** (`npx prefkeeper-setup`) is the fix for the
+   bundler case, and also for `panel.css` itself, which was found to be
+   completely missing from every published build (`tsup` only bundles
+   JS, never touched that plain CSS file). It copies real files — fonts,
+   `panel.css`, a generated `prefkeeper-root.css` — directly into the
+   developer's own project, so their own bundler/HTML references plain,
+   static paths instead of anything computed at runtime.
+
+Both mechanisms are kept, not one replacing the other — each is correct
+for the case it actually works in.
 
 ## Testing
 
 - Pure logic (`core/`, `storage/`, `presets/`) runs in Vitest's default
-  Node environment — no DOM needed.
-- `fonts.js`, `panel.js`, and `utils/dom.js` need a real DOM to test
-  against, so their test files run under `jsdom` — declared explicitly
-  in `vitest.config.js`'s `environmentMatchGlobs`, not just the inline
-  `// @vitest-environment jsdom` comment (some tooling, notably certain
-  editor test-runner integrations, doesn't reliably honor the inline
-  comment alone).
-- jsdom tests verify _behavior_ (does clicking Save persist state, does
-  the dirty-status message update correctly) — they do NOT verify
-  _visual layout_ (jsdom doesn't do real CSS rendering). The flexbox/
-  slider-height work, the overlay's visual centering, etc. were all
-  confirmed by hand in a real browser, not by any automated test.
-  Playwright e2e tests remain a planned-but-unbuilt way to make that
-  kind of check repeatable — see the open items list in
-  `decisions/architecture.md`.
+  Node environment.
+- `fonts.js`, `panel.js`, and `utils/dom.js` need jsdom — declared
+  explicitly in `vitest.config.js`'s `environmentMatchGlobs`, not just
+  the inline `// @vitest-environment jsdom` comment (some editor
+  integrations don't reliably honor the inline comment alone).
+- `scripts/setup.mjs` is tested via genuine integration-style tests
+  (`test/setup.test.js`) against REAL temporary directories (not
+  mocks) — the file is structured specifically to make this possible:
+  the real work lives in an exported, parameterized `runSetup()`, with
+  actual filesystem paths only resolved in a guarded entry-point block
+  that never fires when the file is imported by a test.
+  `scripts/copy-assets.mjs` remains excluded from coverage reporting —
+  a much simpler script that runs its real logic on import, verified
+  manually across many real builds instead.
+- jsdom tests verify _behavior_, not _visual layout_ — the flexbox/
+  slider-height work, the overlay's visual centering, etc. were
+  confirmed by hand in a real browser. Playwright e2e tests remain a
+  planned-but-unbuilt way to make that kind of check repeatable.
