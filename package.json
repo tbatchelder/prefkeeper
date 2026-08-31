@@ -1,6 +1,6 @@
 {
   "name": "prefkeeper",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "A drop-in accessibility preference engine — users set color, text, and motion preferences once on their device; any site using PrefKeeper reads and applies them automatically.",
   "type": "module",
   "main": "./dist/index.cjs",
