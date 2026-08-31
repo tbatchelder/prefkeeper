@@ -1,5 +1,12 @@
 # PrefKeeper
 
+![npm version](https://img.shields.io/npm/v/prefkeeper)
+![CI](https://github.com/tbatchelder/prefkeeper/actions/workflows/ci.yml/badge.svg)
+![license](https://img.shields.io/github/license/tbatchelder/prefkeeper)
+![coverage](https://img.shields.io/codecov/c/github/tbatchelder/prefkeeper)
+![typescript](https://img.shields.io/badge/TypeScript-Ready-blue)
+![bundle size](https://img.shields.io/bundlephobia/minzip/prefkeeper)
+
 A drop-in accessibility preference engine. A user sets their color, text,
 motion, and focus preferences once — on your site, using their browser —
 and PrefKeeper remembers them and applies them automatically on return
