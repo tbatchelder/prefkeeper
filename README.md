@@ -1,11 +1,5 @@
 # PrefKeeper
 
-![npm version](https://img.shields.io/npm/v/prefkeeper)
-![CI](https://github.com/tbatchelder/prefkeeper/actions/workflows/ci.yml/badge.svg)
-![license](https://img.shields.io/github/license/tbatchelder/prefkeeper)
-![typescript](https://img.shields.io/badge/TypeScript-Ready-blue)
-![bundle size](https://img.shields.io/bundlephobia/minzip/prefkeeper)
-
 A drop-in accessibility preference engine. A user sets their color, text,
 motion, and focus preferences once — on your site, using their browser —
 and PrefKeeper remembers them and applies them automatically on return
@@ -15,6 +9,39 @@ You control your site's design entirely. PrefKeeper only ever changes
 _presentation_ — color, text sizing, motion, focus indicators — never
 markup, semantics, ARIA, or alt text. That stays your responsibility as
 the developer, same as it always has been.
+
+<!-- 1. Badges right up top for project health -->
+<p align="center">
+  <img src="https://img.shields.io/npm/v/prefkeeper" alt="npm version" />
+  <img src="https://github.com/tbatchelder/prefkeeper/actions/workflows/ci.yml/badge.svg" alt="CI Status" />
+  <img src="https://img.shields.io/github/license/tbatchelder/prefkeeper" alt="License" />
+  <img src="https://img.shields.io/badge/TypeScript-Ready-blue" alt="TypeScript Ready" />
+  <img src="https://img.shields.io/bundlephobia/minzip/prefkeeper" alt="Bundle Size" />
+</p>
+
+---
+
+<!-- 2. Branding / Company Logo -->
+<p align="center">
+  By BEAM Inc. <br>
+  <img src="docs/images/beam-logo.svg" alt="BEAM Inc. Logo" width="75" /> 
+</p>
+
+<!-- 3. Feature Screenshots Preview (Click to expand) -->
+<p align="center">
+  <a href="docs/images/pk-colors.png" target="_blank">
+    <img src="docs/images/pk-colors.png" alt="Colors Preference Thumbnail" width="100" />
+  </a>
+  <a href="docs/images/pk-text.png" target="_blank">
+    <img src="docs/images/pk-text.png" alt="Text Preference Thumbnail" width="100" />
+  </a>
+  <a href="docs/images/pk-motion.png" target="_blank">
+    <img src="docs/images/pk-motion.png" alt="Motion Preference Thumbnail" width="100" />
+  </a>
+  <a href="docs/images/pk-focus.png" target="_blank">
+    <img src="docs/images/pk-focus.png" alt="Focus Preference Thumbnail" width="100" />
+  </a>
+</p>
 
 ## Why
 
@@ -37,7 +64,7 @@ That second command creates a `prefkeeper/` folder in your project:
 prefkeeper/
 ├── fonts/                 (the bundled accessible font, all weights)
 ├── prefkeeper-root.css     (font-face rules + editable default colors)
-└── panel.css               (PrefKeeper's own UI styling -- don't edit this one)
+└── panel.css               (PrefKeeper's own UI styling -- DON'T EDIT THIS ONE)
 ```
 
 **Why a setup step, instead of everything working automatically from
@@ -157,8 +184,8 @@ initPrefKeeper({
 
 ## Status
 
-Early (v0.8) but functional — the core preference panel, storage,
-import/export, and settings are built and tested. Not yet published to
+Early (v0.1.2) but functional — the core preference panel, storage,
+import/export, and settings are built and tested. Published to
 npm. A browser extension (for preferences to follow a visitor across
 different sites) and a React wrapper are planned, not yet built.
 

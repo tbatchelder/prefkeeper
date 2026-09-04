@@ -688,3 +688,26 @@ input[type='range'].pk-vertical-slider::-moz-range-thumb {
     min-width: 140px;
   }
 }
+
+.pk-app-footer {
+  position: relative; /* anchor point for the centered credit block below */
+}
+
+.pk-footer-credit {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+  color: #555;
+  pointer-events: none; /* purely decorative -- shouldn't steal clicks meant for Save/Reset/View Site Default on either side */
+}
+
+.pk-footer-logo {
+  height: 36px; /* starting point -- see note below on adjusting this */
+  width: auto;
+  flex-shrink: 0;
+}
