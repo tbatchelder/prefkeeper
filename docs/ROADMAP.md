@@ -4,7 +4,7 @@ Status board, not a decision log — see
 [`decisions/architecture.md`](./decisions/architecture.md) for the
 _why_ behind anything here.
 
-## v1 — done
+## v1 — In Testing
 
 Colors, Text, Motion, Focus tabs; presets (with a `customPresets`
 extension point); Import/Export; Settings/Pause; Save/Reset/View Site
@@ -20,9 +20,8 @@ issue/PR templates in place.
 
 ## Immediate next steps
 
-- [ ] Decide public-repo timing (currently private) — your call, not a
-      technical blocker.
-- [ ] Real `npm publish` once ready (name confirmed available, dry-run
+- [x] Decide public-repo timing (currently private). NOW PUBLIC.
+- [x] Real `npm publish` once ready (name confirmed available, dry-run
       already clean).
 - [ ] Cross-browser check (Firefox, Safari) — the vertical-slider CSS
       technique has only been confirmed in Chromium so far.

@@ -3,7 +3,7 @@
 ## Getting started
 
 ```bash
-git clone <repo-url>
+git clone https://github.com/tbatchelder/prefkeeper.git
 cd prefkeeper
 npm install
 npm test
