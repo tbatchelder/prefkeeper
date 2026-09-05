@@ -161,7 +161,7 @@ complete working example.
 ## Custom presets
 
 Add your own presets — or override the built-in ones — without forking
-anything:
+anything by adding _customPresets_ to the _initPrefKeeper_ call:
 
 ```js
 initPrefKeeper({
