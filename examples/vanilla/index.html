@@ -108,7 +108,21 @@
       document.getElementById('open-btn').addEventListener('click', async () => {
         document.getElementById('pk-mount').innerHTML = '';
         await initPrefKeeper({
-          mountTo: document.getElementById('pk-mount')
+          mountTo: document.getElementById('pk-mount'),
+          customPresets: {
+            contrast: {
+              forest: {
+                label: 'Forest',
+                values: {
+                  background: { hue: 90, sat: 15, light: 95 },
+                  text: { hue: 30, sat: 45, light: 15 },
+                  primary: { hue: 140, sat: 45, light: 25 },
+                  onPrimary: { hue: 60, sat: 20, light: 98 },
+                  link: { hue: 95, sat: 40, light: 28 }
+                }
+              }
+            }
+          }
         });
       });
     </script>

@@ -1,0 +1,61 @@
+/**
+ * IMPORTANT: the two @import lines below assume `npx prefkeeper-setup`
+ * created a `prefkeeper/` folder at your PROJECT ROOT (the default),
+ * and that this file lives at `src/index.css` (typical for Vite). If
+ * your project structure differs, adjust the relative path.
+ *
+ * Order matters: panel.css and the setup-generated root CSS come
+ * FIRST, so your own rules below can still override anything
+ * PrefKeeper doesn't touch.
+ */
+@import '../prefkeeper/panel.css';
+@import '../prefkeeper/prefkeeper-root.css';
+
+.pk-demo-page {
+  background: var(--pk-background, #ffffff);
+  color: var(--pk-text, #222222);
+  font-family: var(--pk-font-family, Arial, sans-serif);
+  font-size: var(--pk-font-size, 100%);
+  line-height: var(--pk-line-height, 1.5);
+  letter-spacing: var(--pk-letter-spacing, 0px);
+  word-spacing: var(--pk-word-spacing, 0px);
+  margin: 2rem;
+  max-width: 700px;
+  transition:
+    background calc(var(--pk-reduce-motion, 1) * 0.3s) ease,
+    color calc(var(--pk-reduce-motion, 1) * 0.3s) ease;
+}
+
+.pk-demo-page a {
+  color: var(--pk-link, #0645ad);
+}
+
+.pk-demo-page .demo-btn {
+  background: var(--pk-primary, #0066cc);
+  color: var(--pk-on-primary, #ffffff);
+  border: none;
+  padding: 0.75rem 1.25rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: inherit;
+  font-family: inherit;
+  transition: transform calc(var(--pk-reduce-motion, 1) * 0.3s) ease;
+}
+
+.pk-demo-page .demo-btn:hover {
+  transform: scale(1.05);
+}
+
+.pk-demo-page .demo-btn:focus,
+.pk-demo-page .demo-input:focus {
+  outline-color: var(--pk-focus-outline-color, hsl(200, 100%, 50%));
+  outline-width: var(--pk-focus-outline-width, 3px);
+  outline-style: solid;
+  outline-offset: 2px;
+}
+
+.pk-demo-page .demo-input {
+  font-size: inherit;
+  font-family: inherit;
+  padding: 0.5rem;
+}
